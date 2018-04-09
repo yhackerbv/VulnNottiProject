@@ -127,7 +127,11 @@ namespace VulnCrawler
                                     //}
                                 }
 
-                                string replace = Regex.Replace(oldBuilder.ToString(), "\t", "");
+
+
+
+
+                                string replace = Regex.Replace(oldBuilder.ToString(), " ", "");
 
                                 Console.WriteLine($"Builder: \n{replace}");
 
