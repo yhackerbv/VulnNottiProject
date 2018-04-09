@@ -57,19 +57,11 @@ namespace VulnCrawler
                             var newOid = entry.Oid;
                             Blob newBlob = r.Lookup<Blob>(newOid);
                             string newContent = newBlob.GetContentText();
-
-
-
-                            //ContentChanges changes = r.Diff.Compare(oldBlob, newBlob);
-
-                            // Console.WriteLine(changes.Patch);
-
                             //   @@ -290,8 + 290,12 @@ def i
                             //   @@ -290,8 +290,12 @@ def is_safe_url(url, host=None):
+                            // 정규식(파이썬 함수만 걸러냄), 위 형식에서 290,8은 290은 시작줄, 8은 라인수, -는 변경전 +는 변경후
                             var regs = Regex.Matches(entry.Patch, @"@@ \-(?<oldStart>\d+),(?<oldLines>\d+) \+(?<newStart>\d+),(?<newLines>\d+) @@ def (?<methodName>\w+)");
-
-
-
+                            
                             if (regs.Count > 0) {
                                 Console.BackgroundColor = ConsoleColor.DarkBlue;
                                 Console.WriteLine($"Old Content: \n{oldContent}");
@@ -78,10 +70,7 @@ namespace VulnCrawler
                                 Console.BackgroundColor = ConsoleColor.DarkMagenta;
                                 Console.WriteLine($"New Content: \n{newContent}");
                                 Console.ResetColor();
-
-
                                 Console.BackgroundColor = ConsoleColor.DarkRed;
-
                                 Console.WriteLine($"Patched: \n{entry.Patch}");
 
                                 Console.ResetColor();
@@ -117,27 +106,10 @@ namespace VulnCrawler
                                      * CVE 탐지된 코드 순환 -> def로 시작하는 파이썬 함수만 걸러내야함
                                      * 문제는 파이썬은 c와 달리 {}가 없어서 상당히 귀찮음
                                      */ 
-                                    //bool found = false;
-                                    //while (!reader.EndOfStream) {
-
-                                    //    string line = reader.ReadLine();
-
-                                    //    if (line.Contains(string.Join("def ", methodName))) {
-
-                                    //    }
-
-                                    //    if (found) {
-
-                                    //    }
-                                    //}
+                                    
                                 }
-
-
-
-
-
+                                
                                 string replace = Regex.Replace(oldBuilder.ToString(), " ", "");
-
                                 Console.WriteLine($"Builder: \n{replace}");
 
                             }
