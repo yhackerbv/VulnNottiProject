@@ -112,6 +112,11 @@ namespace VulnCrawler
                                         }
                                     }
 
+
+                                    /*
+                                     * CVE 탐지된 코드 순환 -> def로 시작하는 파이썬 함수만 걸러내야함
+                                     * 문제는 파이썬은 c와 달리 {}가 없어서 상당히 귀찮음
+                                     */ 
                                     //bool found = false;
                                     //while (!reader.EndOfStream) {
 
