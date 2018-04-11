@@ -15,36 +15,35 @@ namespace VulnCrawler
     {
         static void Main(string[] args) {
 
-            string accountInfo = File.ReadAllText(@"c:\account.txt");
-            string id = accountInfo.Split(',')[0];
-            string pw = accountInfo.Split(',')[1];
+            AWS.SaveAccount();
 
-            MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
-                Server = "",
-                UserID = id,
-                Password = pw,
-                Database = "vuln",
-                Port = 3306
-            };
 
-            string strConn = builder.ToString();
-            builder = null;
-            MySqlConnection conn = new MySqlConnection(strConn);
+            //MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
+            //    Server = "",
+            //    UserID = id,
+            //    Password = pw,
+            //    Database = "vuln",
+            //    Port = 3306
+            //};
+
+            //string strConn = builder.ToString();
+            //builder = null;
+            //MySqlConnection conn = new MySqlConnection(strConn);
    
-            try {
+            //try {
                 
-                String sql = "INSERT INTO members (id, pwd, name) " +
-                                "VALUES ('gon', '111', '김삿갓')";
+            //    String sql = "INSERT INTO members (id, pwd, name) " +
+            //                    "VALUES ('gon', '111', '김삿갓')";
 
-                MySqlCommand cmd = new MySqlCommand(sql, conn);
+            //    MySqlCommand cmd = new MySqlCommand(sql, conn);
 
-                conn.Open();
+            //    conn.Open();
 
-                cmd.ExecuteNonQuery();
-                conn.Close();
-            } catch (Exception e) {
-                Console.WriteLine(e.ToString());
-            }
+            //    cmd.ExecuteNonQuery();
+            //    conn.Close();
+            //} catch (Exception e) {
+            //    Console.WriteLine(e.ToString());
+            //}
             
 //            Run();
 
