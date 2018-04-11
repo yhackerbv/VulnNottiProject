@@ -8,14 +8,45 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using MySql.Data.MySqlClient;
 namespace VulnCrawler
 {
     class Program
     {
         static void Main(string[] args) {
 
+            string accountInfo = File.ReadAllText(@"c:\account.txt");
+            string id = accountInfo.Split(',')[0];
+            string pw = accountInfo.Split(',')[1];
 
-            Run();
+            MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
+                Server = "",
+                UserID = id,
+                Password = pw,
+                Database = "vuln",
+                Port = 3306
+            };
+
+            string strConn = builder.ToString();
+            builder = null;
+            MySqlConnection conn = new MySqlConnection(strConn);
+   
+            try {
+                
+                String sql = "INSERT INTO members (id, pwd, name) " +
+                                "VALUES ('gon', '111', '김삿갓')";
+
+                MySqlCommand cmd = new MySqlCommand(sql, conn);
+
+                conn.Open();
+
+                cmd.ExecuteNonQuery();
+                conn.Close();
+            } catch (Exception e) {
+                Console.WriteLine(e.ToString());
+            }
+            
+//            Run();
 
         }
 
