@@ -13,147 +13,117 @@ namespace VulnCrawler
     class Program
     {
         static void Main(string[] args) {
-            
 
-            
 
-            using (var r = new Repository(@"c:\test2")) {
-                var commits = r.Commits
-                    .Where(c => Regex.Match(c.Message, @"CVE-20\d\d-\d{4}", RegexOptions.IgnoreCase).Success)
-                    //.Where(c => c.Message.IndexOf("CVE-20",
-                    //StringComparison.CurrentCultureIgnoreCase) >= 0)
-                    .ToList();
-                Console.WriteLine(commits.Count);
+            Run();
+
+        }
+
+        public static void Run() {
+            // Repository 폴더들이 있는 주소를 지정하면 하위 폴더 목록을 가져옴(Repository 목록)
+            var directorys = Directory.GetDirectories(@"c:\VulnPy");
+            if (directorys.Length == 0) {
+                Console.WriteLine("Repository 목록 찾기 실패");
+                return;
+            }
+            // Repository 목록 만큼 반복함.
+            foreach (var directory in directorys) {
+                var pyCrawl = new VulnPython(directory);
+                var commits = pyCrawl.Commits;
+
+                
                 foreach (var commit in commits) {
-
+                    // 커밋 메시지
                     string message = commit.Message;
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine($"Commit Message: {message}");
                     Console.ResetColor();
+
                     foreach (var parent in commit.Parents) {
-                        var patch = r.Diff.Compare<Patch>(parent.Tree, commit.Tree, new CompareOptions { });
-                        
-                        var entrys = patch.Where(e => e.Path.EndsWith(".py"));
-                        foreach (var entry in entrys) {
+                        // 부모 커밋과 현재 커밋을 Compare 하여 패치 내역을 가져옴
+                        var patch = pyCrawl.Repository.Diff.Compare<Patch>(parent.Tree, commit.Tree);
+                        // 패치 엔트리 파일 배열 중에 파일 확장자가 .py인 것만 가져옴
+                        // (실질적인 코드 변경 커밋만 보기 위해서)
+                        var entrys = pyCrawl.GetPatchEntryChanges(patch);
+                        // 현재 커밋에 대한 패치 엔트리 배열을 출력함
+                        PrintPatchEntrys(entrys, pyCrawl);
 
-                            Console.ForegroundColor = ConsoleColor.Blue;
-                            Console.WriteLine($"status: {entry.Status.ToString()}");
-                            Console.WriteLine($"added: {entry.LinesAdded.ToString()}, deleted: {entry.LinesDeleted.ToString()}");
-                            Console.WriteLine($"old path: {entry.OldPath.ToString()}, new path: {entry.Path.ToString()}");
-                            Console.ResetColor();
-                            var oldOid = entry.OldOid;
-                            Blob oldBlob = r.Lookup<Blob>(oldOid);
-                            string oldContent = oldBlob.GetContentText();
-                            
-                            var newOid = entry.Oid;
-                            Blob newBlob = r.Lookup<Blob>(newOid);
-                            string newContent = newBlob.GetContentText();
-                            //   @@ -290,8 + 290,12 @@ def i
-                            //   @@ -290,8 +290,12 @@ def is_safe_url(url, host=None):
-                            // 정규식(파이썬 함수만 걸러냄), 위 형식에서 290,8은 290은 시작줄, 8은 라인수, -는 변경전 +는 변경후
-                            var regs = Regex.Matches(entry.Patch, @"@@ \-(?<oldStart>\d+),(?<oldLines>\d+) \+(?<newStart>\d+),(?<newLines>\d+) @@ def (?<methodName>\w+)");
-                            
-                            if (regs.Count > 0) {
-                                Console.BackgroundColor = ConsoleColor.DarkBlue;
-                                Console.WriteLine($"Old Content: \n{oldContent}");
-                                Console.ResetColor();
 
-                                Console.BackgroundColor = ConsoleColor.DarkMagenta;
-                                Console.WriteLine($"New Content: \n{newContent}");
-                                Console.ResetColor();
-                                Console.BackgroundColor = ConsoleColor.DarkRed;
-                                Console.WriteLine($"Patched: \n{entry.Patch}");
-
-                                Console.ResetColor();
-                                Console.WriteLine("-----------");
-                                Console.WriteLine(regs.Count);
-
-                            }
-
-                            foreach (var reg in regs) {
-                                var match = reg as Match;
-                                int.TryParse(match.Groups["oldStart"].Value, out int oldStart);
-                                int.TryParse(match.Groups["oldLines"].Value, out int oldLines);
-                                string methodName = match.Groups["methodName"].Value;
-
-                                Console.WriteLine(match.Groups["oldStart"].Value);
-                                Console.WriteLine(match.Groups["oldLines"].Value);
-                                Console.WriteLine(match.Groups["newStart"].Value);
-                                Console.WriteLine(match.Groups["newLines"].Value);
-                                Console.WriteLine(match.Groups["methodName"].Value);
-                                StringBuilder oldBuilder = new StringBuilder();
-                                using (var reader = new StreamReader(oldBlob.GetContentStream())) {
-                                    int readCount = 0;
-                                    int defSpace = 0;
-                                    while (!reader.EndOfStream && readCount <= oldStart + oldLines) {
-                                        
-                                        string line = reader.ReadLine();
-                                        if (defSpace > 0) {
-                                            if (line.Length < defSpace) {
-                                                continue;
-                                            }
-                                            string concat = line.Substring(0, defSpace);
-                                            if (string.IsNullOrWhiteSpace(concat)) {
-                                                string trim = line.Trim();
-                                                if (trim.StartsWith("#")) {
-                                                    continue;
-                                                }
-
-                                                oldBuilder.Append(line);
-                                            }
-                                            else {
-                                                continue;
-                                            }
-                                        }
-                                        if (Regex.Match(line, $@"def {methodName}\(.*\)").Success) {
-                                            defSpace = line.IndexOf(methodName);
-                                            oldBuilder.Append(line);
-                                        }
-                
-                                    }
-                                    
-                                }
-
-                                StringBuilder sb = new StringBuilder();
-                                sb.Append("\"\"\"");
-                                sb.Append(@".*");
-                                sb.Append("\"\"\"");
-                                if (Regex.Match(oldBuilder.ToString(), sb.ToString()).Success) {
-                                    string replace = Regex.Replace(oldBuilder.ToString(), sb.ToString(), "");
-                                    replace = Regex.Replace(replace, " ", "");
-                                    Console.WriteLine($"Builder: \n{replace}");
-
-                                    string md5 = MD5HashFunc(replace);
-                                    Console.WriteLine($"MD5: {md5}");
-                                }
-
-                            }
-                            Console.WriteLine("-----------");
-                            Console.ResetColor();
-                        }
-                        //Console.WriteLine(patch.Content);
                     }
+                }
+            }
+        }
+                  
+        public static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler pyCrawl) {
 
-                    Console.WriteLine($"Commit {commit.Sha} 추출 완료");
-                    //  Task.Delay(1000).Wait();
-                    //break;
+            foreach (var entry in entrys) {
+
+                // 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine($"status: {entry.Status.ToString()}");
+                Console.WriteLine($"added: {entry.LinesAdded.ToString()}, deleted: {entry.LinesDeleted.ToString()}");
+                Console.WriteLine($"old path: {entry.OldPath.ToString()}, new path: {entry.Path.ToString()}");
+                Console.ResetColor();
+
+                // 기존 소스코드
+                var oldOid = entry.OldOid;
+                Blob oldBlob = pyCrawl.Repository.Lookup<Blob>(oldOid);
+                string oldContent = oldBlob.GetContentText();
+
+                // 변경된 소스코드
+                var newOid = entry.Oid;
+                Blob newBlob = pyCrawl.Repository.Lookup<Blob>(newOid);
+                string newContent = newBlob.GetContentText();
+
+                var regs = pyCrawl.GetMatches(entry.Patch);
+                // 패치 전 코드 (oldContent)
+                // 패치 후 코드 (newContent)
+                // 패치 코드 (entry.Patch)
+                // 출력
+                //if (regs.Count > 0) {
+                //    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                //    Console.WriteLine($"Old Content: \n{oldContent}");
+                //    Console.ResetColor();
+
+                //    Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                //    Console.WriteLine($"New Content: \n{newContent}");
+                //    Console.ResetColor();
+                //    Console.BackgroundColor = ConsoleColor.DarkRed;
+                //    Console.WriteLine($"Patched: \n{entry.Patch}");
+
+                //    Console.ResetColor();
+                //    Console.WriteLine("-----------");
+                //    Console.WriteLine(regs.Count);
+
+                //}
+
+                // 패치 코드에서 매칭된 파이썬 함수들로부터 
+                // 패치 전 코드 파일(oldBlob)을 탐색하여 원본 파이썬 함수 가져오고(originalFunc)
+                // 
+                foreach (var reg in regs) {
+                    var match = reg as Match;
+                    string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value;
+
+                    string originalFunc, md5;
+
+                    (originalFunc, md5) = pyCrawl.GetPatchResult(oldBlob.GetContentStream(),
+                        match.Groups[VulnAbstractCrawler.MethodName].Value);
+      
+                    // 패치 전 원본 함수
+                    Console.WriteLine($"Original Func: {originalFunc}");
+                    // 해쉬 후
+                    Console.WriteLine($"Original Func MD5: {md5}");
+
+
+
                 }
             }
         }
 
-        public static string MD5HashFunc(string str) {
-            StringBuilder MD5Str = new StringBuilder();
-            byte[] byteArr = Encoding.ASCII.GetBytes(str);
-            byte[] resultArr = (new MD5CryptoServiceProvider()).ComputeHash(byteArr);
-
-            //for (int cnti = 1; cnti < resultArr.Length; cnti++) (2010.06.27)
-            for (int cnti = 0; cnti < resultArr.Length; cnti++) {
-                MD5Str.Append(resultArr[cnti].ToString("X2"));
-            }
-            return MD5Str.ToString();
-        }
-
-
+        /// <summary>
+        /// 디렉토리 삭제 함수
+        /// </summary>
+        /// <param name="targetDir"></param>
         public static void DeleteDirectory(string targetDir) {
             File.SetAttributes(targetDir, FileAttributes.Normal);
 
@@ -171,6 +141,12 @@ namespace VulnCrawler
 
             Directory.Delete(targetDir, false);
         }
+
+        /// <summary>
+        /// Clone 콜백 함수
+        /// </summary>
+        /// <param name="progress"></param>
+        /// <returns></returns>
         public static bool TransferProgress(TransferProgress progress) {
             int totalBytes = progress.TotalObjects;
             int receivedBytes = progress.ReceivedObjects;
