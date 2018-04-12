@@ -14,31 +14,20 @@ namespace VulnCrawler
         [XmlRoot("MySqlAccountInfo")]
         public class Account
         {
-            public static string FilePath => @"D:\Account.xml";
+            public static string FilePath => @"Account.xml";
             [XmlAttribute("EndPoint")]
-            public string Endpoint { get; set; }
+            public string Endpoint { get; set; } = "127.0.0.1";
             [XmlAttribute("ID")]
-            public string Id { get; set; }
+            public string Id { get; set; } = "root";
             [XmlAttribute("PW")]
-            public string Pw { get; set; }
-
+            public string Pw { get; set; } = "123";
         }
-        
-        private static Account account;
-
+        public static Account account { get; private set; }
         static AWS() {
-            // account = LoadAccount();
-            account = new Account() {
-                Endpoint = "aaa",
-                Id = "bbb",
-                Pw = "1231",
-
-            };
-            Console.WriteLine(account.Endpoint);
+           // account = LoadAccount();
+          
         }
-
         private static Account LoadAccount() {
-
             if (!File.Exists(Account.FilePath)) {
                 return null;
             }
@@ -47,18 +36,24 @@ namespace VulnCrawler
             using (var reader = new StreamReader(Account.FilePath)) {
                 XmlSerializer xs = new XmlSerializer(typeof(Account));
                 acc = (Account)xs.Deserialize(reader);
-                
-
             }
-
             return acc;
         }
-        
+
+        public static void LoadAccount(string txt) {
+            Account acc = null;
+            // Deserialization
+            using (TextReader reader = new StringReader(txt)) {
+                XmlSerializer xs = new XmlSerializer(typeof(Account));
+                acc = (Account)xs.Deserialize(reader);
+            }
+
+            account = acc;
+
+   
+     
+        }
         public static void SaveAccount() {
-
-
-            //File.SetAttributes(Account.FilePath, FileAttributes.Normal);
-
             // Serialization
             using (StreamWriter wr = new StreamWriter(Account.FilePath)) {
                 XmlSerializer xs = new XmlSerializer(typeof(Account));
@@ -66,6 +61,8 @@ namespace VulnCrawler
             }
 
         }
+
+        
 
     }
 

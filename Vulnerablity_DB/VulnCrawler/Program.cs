@@ -9,15 +9,30 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using MySql.Data.MySqlClient;
+using AESENC;
+using System.Security;
+using System.Runtime.InteropServices;
+
 namespace VulnCrawler
 {
     class Program
     {
         static void Main(string[] args) {
 
-            AWS.SaveAccount();
+            SecureString s_key = GetConsoleSecurePassword();
+            Console.Clear();
+            string key = SecureStringToString(s_key);
+            //AWS.SaveAccount();
+            AES aes = new AES();
+            string txt = File.ReadAllText(@"Account.xml");
+            string xml = aes.AESDecrypt128(txt, key);
 
+            AWS.LoadAccount(xml);
 
+            AWS.Account account = AWS.account;
+
+            Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
+            
             //MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
             //    Server = "",
             //    UserID = id,
@@ -48,7 +63,33 @@ namespace VulnCrawler
 //            Run();
 
         }
+        static String SecureStringToString(SecureString value) {
+            IntPtr valuePtr = IntPtr.Zero;
+            try {
+                valuePtr = Marshal.SecureStringToGlobalAllocUnicode(value);
+                return Marshal.PtrToStringUni(valuePtr);
+            } finally {
+                Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
+            }
+        }
 
+ 
+        private static SecureString GetConsoleSecurePassword() {
+            SecureString pwd = new SecureString();
+            while (true) {
+                ConsoleKeyInfo i = Console.ReadKey(true);
+                if (i.Key == ConsoleKey.Enter) {
+                    break;
+                } else if (i.Key == ConsoleKey.Backspace) {
+                    pwd.RemoveAt(pwd.Length - 1);
+                    Console.Write("\b \b");
+                } else {
+                    pwd.AppendChar(i.KeyChar);
+                    Console.Write("*");
+                }
+            }
+            return pwd;
+        }
         public static void Run() {
             // Repository 폴더들이 있는 주소를 지정하면 하위 폴더 목록을 가져옴(Repository 목록)
             var directorys = Directory.GetDirectories(@"c:\VulnPy");
