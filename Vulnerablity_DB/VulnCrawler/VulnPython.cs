@@ -72,7 +72,16 @@ namespace VulnCrawler
         /// <param name="methodName">찾을 메서드 이름</param>
         /// <returns>함수 문자열</returns>
         protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
-        public abstract (string originalFunc, string hash) GetPatchResult(Stream oldStream, string methodName);
+        public virtual (string originalFunc, string hash) GetPatchResult(Stream oldStream, string methodName) {
+            // 패치 전 원본 함수 구하고
+            string func = GetOriginalFunc(oldStream, methodName);
+            // 주석 제거하고
+            func = RemoveComment(func);
+            Console.WriteLine(func);
+            // 해쉬하고
+            string md5 = MD5HashFunc(func);
+            return (func, md5);
+        }
        /// <summary>
        /// 주석 제거 함수
        /// </summary>
@@ -129,10 +138,6 @@ namespace VulnCrawler
         }
 
         public override IEnumerable<PatchEntryChanges> GetPatchEntryChanges(Patch patch) {
-            throw new NotImplementedException();
-        }
-
-        public override (string originalFunc, string hash) GetPatchResult(Stream oldStream, string methodName) {
             throw new NotImplementedException();
         }
 
@@ -215,15 +220,6 @@ namespace VulnCrawler
             return replace;
         }
 
-        public override (string originalFunc, string hash) GetPatchResult(Stream stream, string methodName) {
-            // 패치 전 원본 함수 구하고
-            string func = GetOriginalFunc(stream, methodName);
-            // 주석 제거하고
-            func = RemoveComment(func);
-            Console.WriteLine(func);
-            // 해쉬하고
-            string md5 = MD5HashFunc(func);
-            return (func, md5);
-        }
+       
     }
 }
