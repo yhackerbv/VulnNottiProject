@@ -19,19 +19,19 @@ namespace VulnCrawler
     {
         static void Main(string[] args) {
 
-            SecureString s_key = GetConsoleSecurePassword();
-            Console.Clear();
-            string key = SecureStringToString(s_key);
-            //AWS.SaveAccount();
-            AES aes = new AES();
-            string txt = File.ReadAllText(@"Account.xml");
-            string xml = aes.AESDecrypt128(txt, key);
+            //SecureString s_key = GetConsoleSecurePassword();
+            //Console.Clear();
+            //string key = SecureStringToString(s_key);
+            ////AWS.SaveAccount();
+            //AES aes = new AES();
+            //string txt = File.ReadAllText(@"Account.xml");
+            //string xml = aes.AESDecrypt128(txt, key);
 
-            AWS.LoadAccount(xml);
+            //AWS.LoadAccount(xml);
 
-            AWS.Account account = AWS.account;
+            //AWS.Account account = AWS.account;
 
-            Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
+            //Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
             
             //MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
             //    Server = "",
@@ -60,7 +60,7 @@ namespace VulnCrawler
             //    Console.WriteLine(e.ToString());
             //}
             
-//            Run();
+            Run();
 
         }
         static String SecureStringToString(SecureString value) {
@@ -101,7 +101,7 @@ namespace VulnCrawler
             foreach (var directory in directorys) {
                 var pyCrawl = new VulnPython(directory);
                 var commits = pyCrawl.Commits;
-
+                
                 
                 foreach (var commit in commits) {
                     // 커밋 메시지

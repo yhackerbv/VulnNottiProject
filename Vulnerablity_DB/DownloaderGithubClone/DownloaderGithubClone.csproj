@@ -5,10 +5,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{42C06434-1ACA-409C-8783-C6341ABFF8BA}</ProjectGuid>
+    <ProjectGuid>{17D012E2-AD26-437B-83DC-EC8E09AF0F8D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>VulnCrawler</RootNamespace>
-    <AssemblyName>VulnCrawler</AssemblyName>
+    <RootNamespace>DownloaderGithubClone</RootNamespace>
+    <AssemblyName>DownloaderGithubClone</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -38,13 +38,8 @@
     <Reference Include="LibGit2Sharp, Version=0.25.0.0, Culture=neutral, PublicKeyToken=7cbde695407f0333, processorArchitecture=MSIL">
       <HintPath>..\packages\LibGit2Sharp.0.25.0\lib\netstandard2.0\LibGit2Sharp.dll</HintPath>
     </Reference>
-    <Reference Include="MySql.Data, Version=8.0.10.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net461\System.ValueTuple.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -53,11 +48,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AES.cs" />
-    <Compile Include="AWS.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="VulnPython.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
