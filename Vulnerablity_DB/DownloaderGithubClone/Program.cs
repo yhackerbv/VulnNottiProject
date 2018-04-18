@@ -17,6 +17,7 @@ namespace DownloaderGithubClone
             string url = Console.ReadLine();
             //https://github.com/django/django.git
 
+
             string pattern = @"https://github.com/(?<ProjectName>\w+)/\w+\.git";
 
             var match = Regex.Match(url, pattern);
