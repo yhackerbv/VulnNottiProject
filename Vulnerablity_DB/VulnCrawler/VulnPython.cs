@@ -120,9 +120,6 @@ namespace VulnCrawler
 
     }
 
-    /// <summary>
-    /// C언어로 작성된 코드 취약점 크롤러
-    /// </summary>
     public class VulnC : VulnAbstractCrawler
     {
         public VulnC(string path) : base(path) {
@@ -150,7 +147,7 @@ namespace VulnCrawler
         }
     }
     /// <summary>
-    /// Python으로 작성된 코드 취약점 크롤러
+    /// 파이썬 크롤러
     /// </summary>
     public class VulnPython : VulnAbstractCrawler
     {
