@@ -57,7 +57,10 @@
     <Compile Include="AWS.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VulnAbstractCrawler.cs" />
+    <Compile Include="VulnC.cs" />
     <Compile Include="VulnPython.cs" />
+    <Compile Include="VulnWorker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
