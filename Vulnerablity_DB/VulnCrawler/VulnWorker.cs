@@ -12,6 +12,7 @@ namespace VulnCrawler
 
     public static class VulnWorker
     {
+        // 템플릿 메서드 패턴
         public static void Run<T>(string dirPath) where T : VulnAbstractCrawler, new() {
             var self = new T();
             self.Init(dirPath);

@@ -72,6 +72,7 @@ namespace VulnCrawler
             }
             // Repository 목록 만큼 반복함.
             foreach (var directory in directorys) {
+                // 템플릿 패턴화 T : VulnAbstractCrawler
                 VulnWorker.Run<VulnPython>(directory);
             }
         }
