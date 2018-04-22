@@ -40,9 +40,6 @@ namespace VulnCrawler
         private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve) {
 
             foreach (var entry in entrys) {
-
-
-
                 // 기존 소스코드
                 var oldOid = entry.OldOid;
                 Blob oldBlob = self.Repository.Lookup<Blob>(oldOid);
@@ -54,6 +51,8 @@ namespace VulnCrawler
                 string newContent = newBlob.GetContentText();
 
                 var regs = self.GetMatches(entry.Patch);
+
+                #region 패치 전 후 코드 출력
                 // 패치 전 코드 (oldContent)
                 // 패치 후 코드 (newContent)
                 // 패치 코드 (entry.Patch)
@@ -78,6 +77,8 @@ namespace VulnCrawler
                 // 패치 코드에서 매칭된 파이썬 함수들로부터 
                 // 패치 전 코드 파일(oldBlob)을 탐색하여 원본 파이썬 함수 가져오고(originalFunc)
                 // 
+#endregion
+
                 foreach (var reg in regs) {
                     var match = reg as Match;
                     string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value;
@@ -87,7 +88,7 @@ namespace VulnCrawler
                     (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
                         match.Groups[VulnAbstractCrawler.MethodName].Value);
 
-                    // 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
+                    #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
                     Console.ForegroundColor = ConsoleColor.Blue;
                     Console.WriteLine($"status: {entry.Status.ToString()}");
                     Console.WriteLine($"added: {entry.LinesAdded.ToString()}, deleted: {entry.LinesDeleted.ToString()}");
@@ -110,7 +111,7 @@ namespace VulnCrawler
                     Console.WriteLine($"Original Func MD5: {md5}");
                     Console.WriteLine("==============================");
 
-
+                    #endregion
 
                 }
             }

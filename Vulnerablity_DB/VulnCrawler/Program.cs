@@ -18,7 +18,7 @@ namespace VulnCrawler
     class Program
     {
         static void Main(string[] args) {
-
+            #region MySql 연결
             //SecureString s_key = GetConsoleSecurePassword();
             //Console.Clear();
             //string key = SecureStringToString(s_key);
@@ -59,6 +59,7 @@ namespace VulnCrawler
             //} catch (Exception e) {
             //    Console.WriteLine(e.ToString());
             //}
+            #endregion
 
             Run();
 
@@ -77,7 +78,7 @@ namespace VulnCrawler
             }
         }
 
-
+        #region Secure string input
         static String SecureStringToString(SecureString value) {
             IntPtr valuePtr = IntPtr.Zero;
             try {
@@ -105,7 +106,8 @@ namespace VulnCrawler
             }
             return pwd;
         }
-     
+#endregion
+
 
         /// <summary>
         /// 디렉토리 삭제 함수
