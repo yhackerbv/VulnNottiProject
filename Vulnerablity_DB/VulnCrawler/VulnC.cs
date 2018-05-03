@@ -26,7 +26,7 @@ namespace VulnCrawler
             //sb.Append("\"\"\"");
             //sb.Append(@".*");
             //sb.Append("\"\"\"");
-            //string replace = txt;
+            string replace = txt;
             //if (Regex.Match(txt, sb.ToString()).Success) {
             //    replace = Regex.Replace(txt, sb.ToString(), "");
             //}
