@@ -35,7 +35,7 @@ namespace VulnCrawler
                 }
             }
         }
-
+      
 
         private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve) {
 
@@ -109,6 +109,10 @@ namespace VulnCrawler
                     Console.WriteLine($"Original Func: {originalFunc}");
                     // 해쉬 후
                     Console.WriteLine($"Original Func MD5: {md5}");
+                    Console.BackgroundColor = ConsoleColor.DarkRed;
+                    Console.WriteLine($"Patched: \n{entry.Patch}");
+
+                    Console.ResetColor();
                     Console.WriteLine("==============================");
 
                     #endregion
