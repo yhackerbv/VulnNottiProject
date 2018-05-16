@@ -37,12 +37,40 @@ namespace VulnCrawler
         protected override string GetOriginalFunc(Stream oldStream, string methodName) {
             StringBuilder oldBuilder = new StringBuilder();
             using (var reader = new StreamReader(oldStream)) {
-                int defSpace = 0;
+                
+                bool found = false;
+                int bracketCount = -1;
                 while (!reader.EndOfStream) {
                     string line = reader.ReadLine();
+
+                    if (found)
+                    {
+
+                        int openBracketCount = line.Count(c => c == '{');
+                        int closeBracketCount = line.Count(c => c == '}');
+
+                        if (bracketCount == -1)
+                        {
+
+                        }
+                        if (line.Count(c => c == '{') > 0)
+                        {
+
+                        }
+                    }
+
                     if (Regex.Match(line, $@"{methodName}").Success) {
-                        defSpace = line.IndexOf(methodName);
+                        found = true;
+                        int openBracketCount = line.Count(c => c == '{');
+                        int closeBracketCount = line.Count(c => c == '}');
+                        int subtract = openBracketCount - closeBracketCount;
                         oldBuilder.AppendLine(line);
+
+                        if (subtract < 0)
+                        {
+                            break;
+                        }
+                        bracketCount = subtract;
                     }
 
                 }
