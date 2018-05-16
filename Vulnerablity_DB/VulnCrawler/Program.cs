@@ -70,6 +70,7 @@ namespace VulnCrawler
            // var fields = VulnWorker.GetCriticalVariant(@"return _is_safe_url(url, host) and _is_safe_url(url.replace('\\', '/'), host)");
             var fields = VulnAbstractCrawler.GetCriticalVariant(@"if(i + inl < bl) {");
 
+
             foreach (var item in fields)
             {
                 Console.WriteLine(item);
