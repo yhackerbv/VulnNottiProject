@@ -13,6 +13,8 @@ namespace VulnCrawler
     // 추상 클래스
     public abstract class VulnAbstractCrawler
     {
+
+        private static readonly string[] ReservedList = { "if", "return", "break", "while", "typedef" };
         /// <summary>
         /// 생성자
         /// 경로를 입력받아서(path)
@@ -132,6 +134,44 @@ namespace VulnCrawler
             }
             return string.Empty;
         }
+
+        public static IEnumerable<string> GetCriticalVariant(string line)
+        {
+
+            // 메서드 정규식 패턴
+            string methodPattern = @"(\w+)\(";
+            // 변수 정규식 패턴
+            string fieldPattern = @"\w+";
+            // 메서드 목록
+            var methodSets = new HashSet<string>();
+            var methods = Regex.Matches(line, methodPattern);
+            // 현재 코드 라인에서 메서드 목록 추가
+            foreach (var met in methods)
+            {
+                var method = met as Match;
+                if (method.Success)
+                {
+                    Console.WriteLine(method.Groups[1].Value);
+                    methodSets.Add(method.Groups[1].Value);
+                }
+            }
+            Console.WriteLine("----");
+            var vars = Regex.Matches(line, fieldPattern);
+            // 변수 목록에서 메서드 목록에 있는 것 제외하고 반환
+            foreach (var x in vars)
+            {
+                var field = x as Match;
+                if (field.Success)
+                {
+                    if (methodSets.Contains(field.Value))
+                    {
+                        continue;
+                    }
+                    yield return field.Value;
+                }
+            }
+        }
+
         /// <summary>
         /// MD5 함수
         /// </summary>
