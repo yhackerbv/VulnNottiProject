@@ -10,9 +10,10 @@ namespace VulnCrawler
 {
     public class VulnC : VulnAbstractCrawler
     {
-        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>.+)";
+        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)? [\w]+ [\w]+)\([\w \*\,\t\n]*\)";
 
         protected override string Extension => ".c";
+
 
         public override MatchCollection GetMatches(string patchCode) {
             var regs = Regex.Matches(patchCode, RegexFuncPattern);
@@ -38,26 +39,8 @@ namespace VulnCrawler
             using (var reader = new StreamReader(oldStream)) {
                 int defSpace = 0;
                 while (!reader.EndOfStream) {
-
                     string line = reader.ReadLine();
-                    if (defSpace > 0) {
-                        if (line.Length < defSpace) {
-                            continue;
-                        }
-                        string concat = line.Substring(0, defSpace);
-                        if (string.IsNullOrWhiteSpace(concat)) {
-                            string trim = line.Trim();
-                            // #으로 시작한다면 주석이니 제거
-                            if (trim.StartsWith("#")) {
-                                continue;
-                            }
-                            oldBuilder.AppendLine(line);
-                        } else {
-                            continue;
-                        }
-                    }
                     if (Regex.Match(line, $@"{methodName}").Success) {
-                        
                         defSpace = line.IndexOf(methodName);
                         oldBuilder.AppendLine(line);
                     }

@@ -30,6 +30,8 @@ namespace VulnCrawler
             Repository.Dispose();
         }
 
+        protected virtual Regex MethodExtractor => new Regex(RegexFuncPattern);
+
         #region 메서드 패턴 정규식 그룹
         // 정규식 그룹화
         // @@ -oldStart,oldLines +newStart,newLines @@ MethodName():
