@@ -1,1 +1,1 @@
-![vision](/uploads/93904d56aa5806c267e24d2c36e382d9/vision.jpg)
+![vision](/uploads/9e40266b90abd6f30aed71f1d95ad8c9/vision.png)
