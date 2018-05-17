@@ -16,28 +16,19 @@ namespace VulnCrawler
     /// </summary>
     public class VulnPython : VulnAbstractCrawler
     {
-
         protected override string Extension => ".py";
         protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ def (?<{MethodName}>\w+)";
-
-  
         protected override string ReservedFileName => "PyReserved.txt";
-
-        //    protected override Regex MethodExtractor => new Regex(RegexFuncPattern);
-
-
         public override MatchCollection GetMatches(string patchCode) {
             //var regs = Regex.Matches(patchCode, RegexFuncPattern);
             var regs = MethodExtractor.Matches(patchCode);
             return regs;
         }
-
         protected override string GetOriginalFunc(Stream oldStream, string methodName) {
             StringBuilder oldBuilder = new StringBuilder();
             using (var reader = new StreamReader(oldStream)) {
                 int defSpace = 0;
                 while (!reader.EndOfStream) {
-
                     string line = reader.ReadLine();
                     if (defSpace > 0) {
                         if (line.Length < defSpace) {
@@ -65,12 +56,8 @@ namespace VulnCrawler
             }
             return oldBuilder.ToString();
         }
-        
-
         public override string RemoveComment(string original) {
-
             string txt = Regex.Replace(original, Environment.NewLine, "");
-            
             StringBuilder sb = new StringBuilder();
             sb.Append("\"\"\"");
             sb.Append(@".*");
@@ -81,7 +68,5 @@ namespace VulnCrawler
             }
             return replace;
         }
-
-       
     }
 }
