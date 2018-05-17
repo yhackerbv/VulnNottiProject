@@ -10,18 +10,13 @@ namespace VulnCrawler
 {
     public class VulnC : VulnAbstractCrawler
     {
-
         protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)? [\w]+ [\w]+)\([\w \*\,\t\n]*\)";
-
         protected override string Extension => ".c";
-
         protected override string ReservedFileName => "CReserved.txt";
-
         public override MatchCollection GetMatches(string patchCode) {
             var regs = Regex.Matches(patchCode, RegexFuncPattern);
             return regs;
         }
-
         public override string RemoveComment(string original) {
             string txt = Regex.Replace(original, Environment.NewLine, "");
 

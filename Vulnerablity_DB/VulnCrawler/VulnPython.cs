@@ -8,9 +8,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 namespace VulnCrawler
 {
-
-
-    
     /// <summary>
     /// 파이썬 크롤러
     /// </summary>
