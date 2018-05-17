@@ -14,8 +14,8 @@ namespace VulnCrawler
     public abstract class VulnAbstractCrawler
     {
 
-        protected abstract string[] ReservedList { get; }
-
+        protected HashSet<string> ReservedList { get; }
+        protected abstract string ReservedFileName { get; }
         // = { "if", "return", "break", "while", "typedef" };
 
         /// <summary>
@@ -26,15 +26,39 @@ namespace VulnCrawler
         /// </summary>
         /// <param name="path"></param>
         public VulnAbstractCrawler() {
+            ReservedList = new HashSet<string>();
+            LoadReservedList();
 
         }
 
+        
         // 소멸자
         ~VulnAbstractCrawler() {
 
-            Repository.Dispose();
+            Repository?.Dispose();
+
         }
 
+        private void LoadReservedList()
+        {
+            try
+            {
+                var lines = File.ReadLines(ReservedFileName, Encoding.Default);
+                foreach (var item in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(item))
+                    {
+                        continue;
+                    }
+                    ReservedList.Add(item);
+                }
+                
+            }
+            catch(FileNotFoundException)
+            {
+                Console.WriteLine($"{this.GetType().ToString()} 예약어 파일 목록이 없습니다. 파일 이름 : {ReservedFileName}");
+            }
+        }
         protected virtual Regex MethodExtractor => new Regex(RegexFuncPattern);
 
         #region 메서드 패턴 정규식 그룹
@@ -138,7 +162,12 @@ namespace VulnCrawler
             return string.Empty;
         }
 
-        public static IEnumerable<string> GetCriticalVariant(string line)
+        /// <summary>
+        /// 크리티컬 변수 목록 추출
+        /// </summary>
+        /// <param name="line">현재 코드줄</param>
+        /// <returns></returns>
+        public IEnumerable<string> GetCriticalVariant(string line)
         {
 
             // 메서드 정규식 패턴
@@ -166,10 +195,17 @@ namespace VulnCrawler
                 var field = x as Match;
                 if (field.Success)
                 {
+                    /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
                     if (methodSets.Contains(field.Value))
                     {
                         continue;
                     }
+                    /* 예약어 목록에 있으면 넘어감 */
+                    if (ReservedList.Contains(field.Value))
+                    {
+                        continue;
+                    }
+                    
                     yield return field.Value;
                 }
             }
