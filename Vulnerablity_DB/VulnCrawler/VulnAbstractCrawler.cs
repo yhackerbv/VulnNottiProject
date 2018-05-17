@@ -14,7 +14,10 @@ namespace VulnCrawler
     public abstract class VulnAbstractCrawler
     {
 
-        private static readonly string[] ReservedList = { "if", "return", "break", "while", "typedef" };
+        protected abstract string[] ReservedList { get; }
+
+        // = { "if", "return", "break", "while", "typedef" };
+
         /// <summary>
         /// 생성자
         /// 경로를 입력받아서(path)

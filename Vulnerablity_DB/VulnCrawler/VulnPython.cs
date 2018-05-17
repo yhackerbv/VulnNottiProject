@@ -20,7 +20,9 @@ namespace VulnCrawler
         protected override string Extension => ".py";
         protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ def (?<{MethodName}>\w+)";
 
-    //    protected override Regex MethodExtractor => new Regex(RegexFuncPattern);
+        protected override string[] ReservedList => throw new NotImplementedException();
+
+        //    protected override Regex MethodExtractor => new Regex(RegexFuncPattern);
 
 
         public override MatchCollection GetMatches(string patchCode) {

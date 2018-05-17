@@ -76,7 +76,7 @@ namespace VulnCrawler
                 Console.WriteLine(item);
             }
 
-            return;
+         //   return;
             var directorys = Directory.GetDirectories(@"c:\VulnPy");
             if (directorys.Length == 0) {
                 Console.WriteLine("Repository 목록 찾기 실패");

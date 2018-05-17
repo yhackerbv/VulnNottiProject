@@ -10,6 +10,8 @@ namespace VulnCrawler
 {
     public class VulnC : VulnAbstractCrawler
     {
+        protected override string[] ReservedList => new string[] { "if", "return", "break", "while", "typedef" };
+
         protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)? [\w]+ [\w]+)\([\w \*\,\t\n]*\)";
 
         protected override string Extension => ".c";
