@@ -14,24 +14,24 @@ namespace VulnCrawler
     {
         // 템플릿 메서드 패턴
         public static void Run<T>(string dirPath) where T : VulnAbstractCrawler, new() {
-            var self = new T();
-            self.Init(dirPath);
-            var commits = self.Commits;
+            var crawler = new T();
+            crawler.Init(dirPath);
+            var commits = crawler.Commits;
             foreach (var commit in commits) {
                 // 커밋 메시지
                 string message = commit.Message;
-                string cve = self.GetCVE(message);
+                string cve = crawler.GetCVE(message);
                 if (string.IsNullOrEmpty(cve)) {
                     continue;
                 }
                 foreach (var parent in commit.Parents) {
                     // 부모 커밋과 현재 커밋을 Compare 하여 패치 내역을 가져옴
-                    var patch = self.Repository.Diff.Compare<Patch>(parent.Tree, commit.Tree);
+                    var patch = crawler.Repository.Diff.Compare<Patch>(parent.Tree, commit.Tree);
                     // 패치 엔트리 파일 배열 중에 파일 확장자가 .py인 것만 가져옴
                     // (실질적인 코드 변경 커밋만 보기 위해서)
-                    var entrys = self.GetPatchEntryChanges(patch);
+                    var entrys = crawler.GetPatchEntryChanges(patch);
                     // 현재 커밋에 대한 패치 엔트리 배열을 출력함
-                    PrintPatchEntrys(entrys, self, message, cve);
+                    PrintPatchEntrys(entrys, crawler, message, cve);
                 }
             }
         }

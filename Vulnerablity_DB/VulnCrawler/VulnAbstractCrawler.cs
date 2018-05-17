@@ -168,24 +168,33 @@ namespace VulnCrawler
         /// </summary>
         /// <param name="line">현재 코드줄</param>
         /// <returns></returns>
-        public IEnumerable<string> GetCriticalVariant(string line)
+        public IEnumerable<string> ExtractCriticalVariant(string line)
         {
             line = line.Trim();
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                yield break;
+            }
             if (line.StartsWith("//"))
             {
                 yield break;
             }
             string declarePattern = @"(?<Declare>[a-zA-Z0-9_\.]+) [a-zA-Z0-9_\.]+ =";
             // 메서드 정규식 패턴
-            string methodPattern = @"(\w+)\s*\(";
+            string methodPattern = @"([a-zA-Z0-9_\.]+)\s*\(";
             // 변수 정규식 패턴
-            string fieldPattern = @"^*?[a-zA-Z0-9_\.]+";
+            string fieldPattern = @"^*?[a-zA-Z0-9_\.\[\]]+";
             
             string invalidPattern = @"^[\d\.]+";
 
-            string commentPattern = @"("".*"")";
+            string commentPattern = @"[""].*[""]";
+
+            string commentPattern2 = @"\/\/.*";
+            string commentPattern3 = @"\/\*.+\*\/";
 
             line = Regex.Replace(line, commentPattern, "");
+            line = Regex.Replace(line, commentPattern2, "");
+            line = Regex.Replace(line, commentPattern3, "");
             // 메서드 목록
             var methodSets = new HashSet<string>();
 
@@ -208,7 +217,7 @@ namespace VulnCrawler
                 if (method.Success)
                 {
                     Console.WriteLine(method.Groups[1].Value);
-                    methodSets.Add(method.Groups[1].Value);
+                    methodSets.Add(method.Groups[1].Value); // aaaa
                 }
             }
             Console.WriteLine("----");
