@@ -69,7 +69,7 @@ namespace VulnCrawler
 
             // var fields = VulnWorker.GetCriticalVariant(@"return _is_safe_url(url, host) and _is_safe_url(url.replace('\\', '/'), host)");
             var c = new VulnC();
-            var fields = c.GetCriticalVariant(@"if(i + inl < bl) {");
+            var fields = c.GetCriticalVariant(@"cs64_chunk.chunkSize64 = 12345678;");
             foreach (var item in fields)
             {
                 Console.WriteLine(item);

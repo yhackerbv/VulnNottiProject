@@ -46,13 +46,14 @@ namespace VulnCrawler
                 var lines = File.ReadLines(ReservedFileName, Encoding.Default);
                 foreach (var item in lines)
                 {
+                    
                     if (string.IsNullOrWhiteSpace(item))
                     {
                         continue;
                     }
                     ReservedList.Add(item);
+                    
                 }
-                
             }
             catch(FileNotFoundException)
             {
@@ -169,13 +170,36 @@ namespace VulnCrawler
         /// <returns></returns>
         public IEnumerable<string> GetCriticalVariant(string line)
         {
-
+            line = line.Trim();
+            if (line.StartsWith("//"))
+            {
+                yield break;
+            }
+            string declarePattern = @"(?<Declare>[a-zA-Z0-9_\.]+) [a-zA-Z0-9_\.]+ =";
             // 메서드 정규식 패턴
-            string methodPattern = @"(\w+)\(";
+            string methodPattern = @"(\w+)\s*\(";
             // 변수 정규식 패턴
-            string fieldPattern = @"\w+";
+            string fieldPattern = @"^*?[a-zA-Z0-9_\.]+";
+            
+            string invalidPattern = @"^[\d\.]+";
+
+            string commentPattern = @"("".*"")";
+
+            line = Regex.Replace(line, commentPattern, "");
             // 메서드 목록
             var methodSets = new HashSet<string>();
+
+            // 선언 타입명 추출
+            var declareMatch = Regex.Match(line, declarePattern);
+            string declareName = string.Empty;
+            if (declareMatch.Success)
+            {
+                declareName = declareMatch.Groups["Declare"]?.Value ?? string.Empty;
+
+            }
+            //Console.WriteLine($"선언 : {declareName}");
+
+
             var methods = Regex.Matches(line, methodPattern);
             // 현재 코드 라인에서 메서드 목록 추가
             foreach (var met in methods)
@@ -188,24 +212,37 @@ namespace VulnCrawler
                 }
             }
             Console.WriteLine("----");
-            var vars = Regex.Matches(line, fieldPattern);
-            // 변수 목록에서 메서드 목록에 있는 것 제외하고 반환
+            var vars = Regex.Matches(line, fieldPattern)
+                            .Cast<Match>()
+                            .Where(m => {
+                                if (m.Value.Equals(declareName))
+                                {
+                                    return false;
+                                }
+                                /* 제일 앞자리가 숫자로 시작하면 넘어감 */
+                                if (Regex.IsMatch(m.Value, invalidPattern))
+                                {
+                                    return false;
+                                }
+                                /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
+                                if (methodSets.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+                                /* 예약어 목록에 있으면 넘어감 */
+                                if (ReservedList.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+                                return true;
+                            })
+                            .Distinct(new MatchComparer());
+
             foreach (var x in vars)
             {
                 var field = x as Match;
                 if (field.Success)
                 {
-                    /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
-                    if (methodSets.Contains(field.Value))
-                    {
-                        continue;
-                    }
-                    /* 예약어 목록에 있으면 넘어감 */
-                    if (ReservedList.Contains(field.Value))
-                    {
-                        continue;
-                    }
-                    
                     yield return field.Value;
                 }
             }
@@ -226,5 +263,18 @@ namespace VulnCrawler
             return MD5Str.ToString();
         }
 
+    }
+
+    class MatchComparer : IEqualityComparer<Match>
+    {
+        public bool Equals(Match x, Match y)
+        {
+            return x.Value.Equals(y.Value);
+        }
+
+        public int GetHashCode(Match obj)
+        {
+            return obj.Value.GetHashCode();
+        }
     }
 }
