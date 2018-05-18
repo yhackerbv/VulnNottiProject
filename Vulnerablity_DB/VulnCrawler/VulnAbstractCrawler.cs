@@ -73,7 +73,9 @@ namespace VulnCrawler
         #endregion
 
         public void Init(string path) {
+            Console.WriteLine("로딩중");
             Repository = new Repository(path);
+            Console.WriteLine("로딩 완료");
             Commits = SearchCommits();
         }
         /// <summary>
@@ -88,7 +90,7 @@ namespace VulnCrawler
         /// <summary>
         /// 커밋에서 검색할 정규식 문자열
         /// </summary>
-        public string SearchCommitPattern => @"CVE-20\d\d-\d{4}";
+        public string SearchCommitPattern => @"CVE[ -]\d{4}[ -]\d{4}";
         /// <summary>
         /// 패치 코드에서 함수 찾을 정규식 패턴 문자열
         /// </summary>
@@ -142,6 +144,8 @@ namespace VulnCrawler
         /// <returns>커밋 목록</returns>
         public virtual IEnumerable<Commit> SearchCommits() {
             // where => 조건에 맞는 것을 찾음(CVE-20\d\d-\d{4}로 시작하는 커밋만 골라냄)
+            Console.WriteLine("출력중");
+            Console.WriteLine(Repository.Commits.Count());
             var commits = Repository.Commits
                                     .Where(c => Regex.Match(c.Message, SearchCommitPattern, RegexOptions.IgnoreCase).Success)
                                     .ToList();
@@ -183,7 +187,7 @@ namespace VulnCrawler
             // 메서드 정규식 패턴
             string methodPattern = @"([a-zA-Z0-9_\.]+)\s*\(";
             // 변수 정규식 패턴
-            string fieldPattern = @"^*?[a-zA-Z0-9_\.\[\]]+";
+            string fieldPattern = @"^*?[a-zA-Z0-9_\.\[\]\-\>]+";
             
             string invalidPattern = @"^[\d\.]+";
 

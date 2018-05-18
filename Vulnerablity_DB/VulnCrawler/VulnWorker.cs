@@ -17,6 +17,7 @@ namespace VulnCrawler
             var crawler = new T();
             crawler.Init(dirPath);
             var commits = crawler.Commits;
+            Console.WriteLine(commits.Count());
             foreach (var commit in commits) {
                 // 커밋 메시지
                 string message = commit.Message;
@@ -42,82 +43,99 @@ namespace VulnCrawler
             foreach (var entry in entrys) {
                 // 기존 소스코드
                 var oldOid = entry.OldOid;
-                Blob oldBlob = self.Repository.Lookup<Blob>(oldOid);
-                string oldContent = oldBlob.GetContentText();
 
-                // 변경된 소스코드
-                var newOid = entry.Oid;
-                Blob newBlob = self.Repository.Lookup<Blob>(newOid);
-                string newContent = newBlob.GetContentText();
+                try
+                {
+                    Blob oldBlob = self.Repository.Lookup<Blob>(oldOid);
+                    string oldContent = oldBlob.GetContentText();
 
-                var regs = self.GetMatches(entry.Patch);
+                    // 변경된 소스코드
+                    var newOid = entry.Oid;
+                    Blob newBlob = self.Repository.Lookup<Blob>(newOid);
+                    string newContent = newBlob.GetContentText();
+                    var regs = self.GetMatches(entry.Patch);
+                    #region 패치 전 후 코드 출력
+                    // 패치 전 코드 (oldContent)
+                    // 패치 후 코드 (newContent)
+                    // 패치 코드 (entry.Patch)
+                    // 출력
+                    if (regs.Count > 0)
+                    {
+                        //    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                        //    Console.WriteLine($"Old Content: \n{oldContent}");
+                        //    Console.ResetColor();
 
-                #region 패치 전 후 코드 출력
-                // 패치 전 코드 (oldContent)
-                // 패치 후 코드 (newContent)
-                // 패치 코드 (entry.Patch)
-                // 출력
-                //if (regs.Count > 0) {
-                //    Console.BackgroundColor = ConsoleColor.DarkBlue;
-                //    Console.WriteLine($"Old Content: \n{oldContent}");
-                //    Console.ResetColor();
+                        //    Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                        //    Console.WriteLine($"New Content: \n{newContent}");
+                        //    Console.ResetColor();
 
-                //    Console.BackgroundColor = ConsoleColor.DarkMagenta;
-                //    Console.WriteLine($"New Content: \n{newContent}");
-                //    Console.ResetColor();
-                //    Console.BackgroundColor = ConsoleColor.DarkRed;
-                //    Console.WriteLine($"Patched: \n{entry.Patch}");
-
-                //    Console.ResetColor();
-                //    Console.WriteLine("-----------");
-                //    Console.WriteLine(regs.Count);
-
-                //}
-
-                // 패치 코드에서 매칭된 파이썬 함수들로부터 
-                // 패치 전 코드 파일(oldBlob)을 탐색하여 원본 파이썬 함수 가져오고(originalFunc)
-                // 
-#endregion
-
-                foreach (var reg in regs) {
-                    var match = reg as Match;
-                    string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value;
-
-                    string originalFunc, md5;
-
-                    (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
-                        match.Groups[VulnAbstractCrawler.MethodName].Value);
-
-                    #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
-                    Console.ForegroundColor = ConsoleColor.Blue;
-                    Console.WriteLine($"status: {entry.Status.ToString()}");
-                    Console.WriteLine($"added: {entry.LinesAdded.ToString()}, deleted: {entry.LinesDeleted.ToString()}");
-                    Console.WriteLine($"old path: {entry.OldPath.ToString()}, new path: {entry.Path.ToString()}");
-                    Console.ResetColor();
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.WriteLine($"status: {entry.Status.ToString()}");
+                        Console.WriteLine($"added: {entry.LinesAdded.ToString()}, deleted: {entry.LinesDeleted.ToString()}");
+                        Console.WriteLine($"old path: {entry.OldPath.ToString()}, new path: {entry.Path.ToString()}");
+                        Console.ResetColor();
 
 
-                    Console.Write($"CVE: ");
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write($"{cve}");
-                    Console.WriteLine("");
-                    Console.ResetColor();
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"Commit Message: {commitMsg}");
-                    Console.ResetColor();
+                        Console.Write($"CVE: ");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write($"{cve}");
+                        Console.WriteLine("");
+                        Console.ResetColor();
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"Commit Message: {commitMsg}");
+                        Console.ResetColor();
 
-                    // 패치 전 원본 함수
-                    Console.WriteLine($"Original Func: {originalFunc}");
-                    // 해쉬 후
-                    Console.WriteLine($"Original Func MD5: {md5}");
-                    Console.BackgroundColor = ConsoleColor.DarkRed;
-                    Console.WriteLine($"Patched: \n{entry.Patch}");
 
-                    Console.ResetColor();
-                    Console.WriteLine("==============================");
 
+                        Console.BackgroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine($"Patched: \n{entry.Patch}");
+
+                        Console.ResetColor();
+                        //    Console.WriteLine("-----------");
+
+
+
+                    }
+
+
+
+                    // 패치 코드에서 매칭된 파이썬 함수들로부터 
+                    // 패치 전 코드 파일(oldBlob)을 탐색하여 원본 파이썬 함수 가져오고(originalFunc)
+                    // 
                     #endregion
 
+                    foreach (var reg in regs)
+                    {
+                        var match = reg as Match;
+                        string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value.Trim();
+                        Console.WriteLine("methodName = " + methodName);
+                        string originalFunc, md5;
+                        (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
+                            match.Groups[VulnAbstractCrawler.MethodName].Value);
+
+                        #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
+
+
+
+                        // 패치 전 원본 함수
+                        Console.WriteLine($"Original Func: {originalFunc}");
+                        // 해쉬 후
+                        Console.WriteLine($"Original Func MD5: {md5}");
+                        //Console.BackgroundColor = ConsoleColor.DarkRed;
+                        //Console.WriteLine($"Patched: \n{entry.Patch}");
+
+                        Console.ResetColor();
+                        Console.WriteLine("==============================");
+
+                        #endregion
+
+                    }
                 }
+                catch (Exception)
+                {
+                    continue;
+                }
+
             }
         }
 
