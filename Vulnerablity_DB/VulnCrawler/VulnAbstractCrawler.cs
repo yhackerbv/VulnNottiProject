@@ -125,7 +125,7 @@ namespace VulnCrawler
             // 패치 전 원본 함수 구하고
             string func = GetOriginalFunc(oldStream, methodName);
             // 주석 제거하고
-            func = RemoveComment(func);
+         //   func = RemoveComment(func);
             // 해쉬하고
             string md5 = MD5HashFunc(func);
             return (func, md5);
