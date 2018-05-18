@@ -59,6 +59,25 @@ class HomeView(View):
     #     with connection.cursor() as cursor:
     #         cursor.execute(query, param_list)
 
+class EditView(TemplateView):
+    template_name = 'registration/edit.html'
+    success_url = reverse_lazy('register_done')
+
+    def get(self, request, *args, **kwargs):
+        context = {}
+        red = 10
+        context['red'] = red
+        context['form'] = UserEditForm
+        return render(self.request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+
+        email = self.request.POST['email']
+        repository = self.request.POST['repository']
+
+        print(email, repository)
+        return render(self.request, 'index.html')
+
 
 
 class UserCreateView(CreateView):

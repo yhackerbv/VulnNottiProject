@@ -11,6 +11,14 @@ class UserCreationForm(UserCreationForm):
         help_text=("github 레포지토리를 등록하세요."))
 
 
+class UserEditForm(forms.Form):
+    email = EmailField(label=("이메일"), required=True,
+        help_text=("이메일을 입력하세요."))
+
+    repository = URLField(label=("레포지토리"), required=True,
+        help_text=("github 레포지토리를 입력하세요."))
+
+
     class Meta:
         model = User
         fields = ("username", "email", "repository", "password1", "password2")

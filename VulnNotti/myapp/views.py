@@ -14,6 +14,31 @@ class MypageView(TemplateView):
         context = {}
         context['form'] = testform
 
+        query = 'SELECT * FROM vuln.vulnInfo'
+
+        param_list = []
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, param_list)
+
+        columns = [column[0] for column in cursor.description]
+
+        object_list = []
+
+        for row in cursor.fetchall():
+            object_list.append(dict(zip(columns, row)))
+
+        context = {}
+
+        red = 3
+        blue = 4
+        green = 5
+
+        context['red'] = red
+        context['blue'] = blue
+        context['green'] = green 
+        context['object_list'] = object_list
+
         return render(self.request, self.template_name, context)
 
 
