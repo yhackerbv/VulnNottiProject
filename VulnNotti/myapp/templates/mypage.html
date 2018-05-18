@@ -17,42 +17,13 @@
     <link rel="stylesheet" href="{% static 'vendor/magnific-popup/magnific-popup.css' %}">
     <!-- Custom styles for this template -->
     <link rel="stylesheet" href="{% static 'css/freelancer.min.css' %}">
-
-    <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/0.2.0/Chart.min.js" type="text/javascript"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
-    <script type="text/javascript">
-    $( document ).ready(function() {
-      var ctx = document.getElementById("myChart");
-      var data = {
-        labels: [
-          "Red",
-          "Blue",
-          "Yellow"
-        ],
-        datasets: [
-          {
-            data: [300, 50, 100],
-            backgroundColor: [
-              "#FF6384",
-              "#36A2EB",
-              "#FFCE56"
-            ],
-            hoverBackgroundColor: [
-              "#FF6384",
-              "#36A2EB",
-              "#FFCE56"
-            ]
-          }
-        ]
-      };
-
-      var myChart = new Chart(ctx, {
-        type: 'pie',
-        data: data,
-        options: options
-      });
-    });
-    </script>
+    <!--  highlight.js  -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.5.0/styles/vs2015.min.css">
+    <script src="//cdn.jsdelivr.net/highlight.js/9.5.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
   </head>
 
 
@@ -80,24 +51,35 @@
     </nav>
 
     <!-- Header -->
-    <header class="masthead bg-primary text-white text-center">
+    <header class="bg-primary text-white text-center">
       <div class="container">
-
         <h3 class="text-uppercase mb-0">정적 분석 페이지 입니다.</h3>
         <hr class="star-light">
-        <h2 class="font-weight-light mb-0"></h2>
       </div>
 
     </header>
 
     <!-- Portfolio Grid Section -->
 
-<canvas id="myChart" width="400" height="400"></canvas>
     <!-- <section class="portfolio" id="portfolio"> -->
-    <div class="col-md-6 col-lg-6" style="float:left;">
+    <div class="col-md-6 col-lg-6" style="float: left;">
       <div class="container">
+        <canvas id="barChart" width="700" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-6" style="float: right;">
+      <div class="container">
+        <canvas id="pieChart" width="700" height="200"></canvas>
+      </div>
+    </div>
 
 
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+
+
+    <div class="col-md-12 col-lg-12">
+      <div style="width: 100%; margin-left: 0px; margin-right: 0px;">
         <!-- <form method="post" action=".">
           <fieldset>{% csrf_token %}
             <div>
@@ -116,226 +98,233 @@
               <th>CVE</th>
               <th>내용</th>
               <th>이름</th>
-
-            </tr>
-
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr>
-
-        </table>
-      </div>
-    </div>
-
-    <div class="col-md-6 col-lg-6" style="float:left;">
-      <div class="container">
-        <table class="table table-hover">
-          <thead>
-            <tr>
               <th>번호</th>
               <th>제목</th>
               <th>이름</th>
               <th>CVE</th>
               <th>내용</th>
-              <th>이름</th>
+            </tr>
+            {% for object in object_list %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ object.Language }}</td>
+              <td>{{ object.Length }}</td>
+              <td>{{ object.PreviousFunc }}</td>
+              <td>{{ object.InputDate }}</td>
+              <td>{{ object.Hash }}</td>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ object.Language }}</td>
+              <td>{{ object.Length }}</td>
+              <td>{{ object.PreviousFunc }}</td>
 
+              <td id="modal_{{ forloop.counter }}">
+                <a class="portfolio-item d-block mx-auto" href="#portfolio-modal-{{ forloop.counter }}">
+                  <button class="btn btn-primary">자세히보기</button></td>
+                </a>
+              </td>
             </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr><tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary">자세히보기</button></td>
-            </tr>
-            <tr>
-              <td>1</td>
-              <td>2</td>
-              <td>경수</td>
-              <td><button class="btn btn-primary" data-toggle="modal" data-target="#myModal">자세히보기</button></td>
-            </tr>
-
+            {% endfor %}
         </table>
-      </div>
     </div>
 
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">
-              <span aria-hidden="true">&times;</span>
-              <span class="sr-only">Close</span>
-            </button>
-            <h4 class="modal-title">모달제목</h4>
-          </div>
-          <div class="modal-body">
-            <p>content</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">닫기
-            </button>
-          </div>
+    {% for object in object_list %}
+    <div class="portfolio-modal mfp-hide" id="portfolio-modal-{{ forloop.counter }}">
+      <div class="portfolio-modal-dialog bg-white">
+        <!--  header  -->
+        <div class="modal-header">
+          <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">cve function name</h2>
         </div>
+        <!--  left side  -->
+        <div class="col-lg-6" style="float: left; border: 1px solid red; height: 1000px;">
+          <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">previous sourcecode</h2>
+          <hr class="star-dark mb-5">
+          <pre><code>
+            using namespace std;
+
+            int main()
+            {
+                int rows;
+
+                cout << "Enter number of rows: ";
+                cin >> rows;
+
+                for(int i = 1; i <= rows; ++i)
+                {
+                    for(int j = 1; j <= i; ++j)
+                    {
+                        cout << j << " ";
+                    }
+                    cout << "\n";
+                }
+
+                char input, alphabet = 'A';
+
+                cout << "Enter the uppercase character you want to print in the last row: ";
+                cin >> input;
+
+                for(int i = 1; i <= (input-'A'+1); ++i)
+                {
+                    for(int j = 1; j <= i; ++j)
+                    {
+                        cout << alphabet << " ";
+                    }
+                    ++alphabet;
+
+                    cout << endl;
+                }
+                return 0;
+            }
+          </code></pre>
+        </div>
+        <!--  right side  -->
+        <div class="col-lg-6" style="float: left; border: 1px solid red; height: 1000px;">
+          <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">modified sourcecode</h2>
+          <hr class="star-dark mb-5">
+          <pre><code>
+            using namespace std;
+
+            int main()
+            {
+                int rows;
+
+                cout << "Enter number of rows: ";
+                cin >> rows;
+
+                for(int i = 1; i <= rows; ++i)
+                {
+                    for(int j = 1; j <= i; ++j)
+                    {
+                        cout << j << " ";
+                    }
+                    cout << "\n";
+                }
+
+                char input, alphabet = 'A';
+
+                cout << "Enter the uppercase character you want to print in the last row: ";
+                cin >> input;
+
+                for(int i = 1; i <= (input-'A'+1); ++i)
+                {
+                    for(int j = 1; j <= i; ++j)
+                    {
+                        cout << alphabet << " ";
+                    }
+                    ++alphabet;
+
+                    cout << endl;
+                }
+                return 0;
+            }
+          </code></pre>
+        </div>
+        <!--  footer  -->
+        <div class="modal-footer" style="float: clear;">
+          <a class="btn btn-primary btn-lg rounded-pill portfolio-modal-dismiss" href="#">
+            <i class="fa fa-close"></i>
+            Close
+          </a>
+        </div>
+
       </div>
     </div>
-
-
-
-    <!-- Scroll to Top Button (Only visible on small and extra-small screen sizes) -->
-    <div class="scroll-to-top d-lg-none position-fixed ">
-      <a class="js-scroll-trigger d-block text-center text-white rounded" href="#page-top">
-        <i class="fa fa-chevron-up"></i>
-      </a>
-    </div>
-
-
-
-    <script src="{% static 'js/Chart.min.js' %}"></script>
-    <script src="{% static 'vendor/freelancer_jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'vendor/freelancer_bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
-    <script src="{% static 'vendor/magnific-popup/jquery.magnific-popup.min.js' %}"></script>
-    <script src="{% static 'js/jqBootstrapValidation.js' %}"></script>
-    <script src="{% static 'js/contact_me.js' %}"></script>
-    <script src="{% static 'js/freelancer.min.js' %}"></script>
-
-    <script>
-
-
-    </script>
-
+    {% endfor %}
 
   </body>
 
+  <script src="{% static 'js/Chart.min.js' %}"></script>
+  <script src="{% static 'vendor/freelancer_jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'vendor/freelancer_bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+  <script src="{% static 'vendor/magnific-popup/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'js/jqBootstrapValidation.js' %}"></script>
+  <script src="{% static 'js/contact_me.js' %}"></script>
+  <script src="{% static 'js/freelancer.min.js' %}"></script>
+
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
+  <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
+  <script type="text/javascript">
+
+  // barChart
+  var ctx = document.getElementById("barChart").getContext('2d');
+  var myChart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+      labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+      datasets: [{
+          label: '# of Votes',
+          data: [12, 19, 3, 5, 2, 3],
+          backgroundColor: [
+              'rgba(255, 99, 132, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+              'rgba(75, 192, 192, 0.2)',
+              'rgba(153, 102, 255, 0.2)',
+              'rgba(255, 159, 64, 0.2)'
+          ],
+          borderColor: [
+              'rgba(255,99,132,1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 159, 64, 1)'
+          ],
+          borderWidth: 1
+      }]
+  },
+  options: {
+      scales: {
+          yAxes: [{
+              ticks: {
+                  beginAtZero:true
+              }
+          }]
+      }
+  }
+  });
+
+  // pieChart
+  var red = {{ red }}
+  var green = {{ green }}
+  var blue = {{ blue }}
+
+  var ctx = document.getElementById("pieChart").getContext('2d');
+  var data = {
+      datasets: [{
+          data: [red, green, blue],
+          backgroundColor: [
+              'rgba(255, 99, 132, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+          ],
+          borderColor: [
+              'rgba(255,99,132,1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+          ],
+          borderWidth: 1
+      }],
+      // These labels appear in the legend and in the tooltips when hovering different arcs
+      labels: [
+          'Red',
+          'Yellow',
+          'Blue'
+      ]
+  };
+  var options = {
+          title: {
+                    display: true,
+                    text: 'CVE',
+                    position: 'top'
+                },
+          rotation: -0.7 * Math.PI
+  };
+
+  var myChart = new Chart(ctx, {
+    type: 'pie',
+    data: data,
+    options: options
+  });
+  </script>
 </html>

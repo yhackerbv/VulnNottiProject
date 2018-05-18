@@ -26,6 +26,8 @@ urlpatterns = [
     url(r'^home/', HomeView.as_view(), name='home'),
     url(r'^myapp/', include('myapp.urls', namespace='myapp')),
 
+    url(r'^edit/', EditView.as_view(), name='edit'),
+
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'^accounts/register/$', UserCreateView.as_view(), name='register'),
     url(r'^accounts/register/done$', UserCreateDoneTV.as_view(), name='register_done'),
