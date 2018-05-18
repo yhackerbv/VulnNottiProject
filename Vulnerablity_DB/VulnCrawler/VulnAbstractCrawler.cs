@@ -114,14 +114,126 @@ namespace VulnCrawler
         /// <returns>함수 문자열</returns>
         protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
 
+        // 테스트용 함수 곧 삭제될 운명
+        public string GetOriginalFuncTest(Stream oldStream, string methodName, int start)
+        {
+            StringBuilder oldBuilder = new StringBuilder();
+            
+            using (var reader = new StreamReader(oldStream))
+            {
 
+
+                bool found = false;
+                bool found2 = false;
+                bool commentLine = false;
+                int bracketCount = -1;
+                string stringPattern = @"[""].*[""]";
+                string commentPattern = @"\/\*.+\*\/";
+                string commentPattern2 = @"\/\*";
+                string commentPattern3 = @"\*\/";
+                int readCount = 0;
+                Queue<string> tempQ = new Queue<string>();
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+
+
+                    if (readCount++ < start)
+                    {
+                        tempQ.Enqueue(line);
+                        continue;
+                    }
+                    Stack<string> tempStack = new Stack<string>();
+                    while (tempQ.Count > 0)
+                    {
+                        string s = tempQ.Dequeue();
+                        tempStack.Push(s);
+                        string method = Regex.Escape(methodName);
+                        if (Regex.Match(s, $"{method}").Success)
+                        {
+
+                            break;
+                        }
+                    }
+
+                    while (tempStack.Count > 0)
+                    {
+                        string s = tempStack.Pop();
+                        string trim = s.Trim();
+
+                        if (commentLine)
+                        {
+                            if (Regex.IsMatch(trim, commentPattern3))
+                            {
+                                commentLine = false;
+                                trim = Regex.Split(trim, commentPattern3)[1];
+                            }
+                            continue;
+                        }
+
+
+                        string removeString = Regex.Replace(trim, stringPattern, "");
+
+                        // /* ~ 패턴
+                        if (Regex.IsMatch(trim, commentPattern2))
+                        {
+
+                            // /* ~ */ 패턴이 아닌 경우
+                            if (!Regex.IsMatch(trim, commentPattern))
+                            {
+                                commentLine = true;
+                            }
+                            trim = Regex.Split(trim, "/*")[0];
+
+                        }
+                        if (string.IsNullOrWhiteSpace(trim))
+                        {
+                            continue;
+                        }
+
+                        int openBracketCount = removeString.Count(c => c == '{');
+                        int closeBracketCount = removeString.Count(c => c == '}');
+                        int subtract = openBracketCount - closeBracketCount;
+                        bracketCount += subtract;
+                        // 메서드 시작 괄호 찾은 경우
+                        if (found2)
+                        {
+                            // 괄호가 모두 닫혔으니 종료
+                            if (bracketCount < 0)
+                            {
+                                Console.WriteLine("괄호끝");
+                                break;
+                            }
+                          //  oldBuilder.AppendLine(line);
+                        }
+                        else
+                        {
+                            if (openBracketCount > 0)
+                            {
+                                found2 = true;
+                            }
+
+                        }
+                        oldBuilder.AppendLine(s);
+                    }
+
+
+                }
+
+            }
+            Console.WriteLine("찾음");
+            Console.WriteLine(oldBuilder.ToString());
+            Console.ReadLine();
+
+            return oldBuilder.ToString();
+        }
         /// <summary>
         /// 실제 프로세스
         /// </summary>
         /// <param name="oldStream"></param>
         /// <param name="methodName"></param>
         /// <returns></returns>
-        public virtual (string originalFunc, string hash) Process(Stream oldStream, string methodName) {
+        public virtual (string originalFunc, string hash) Process(Stream oldStream, string methodName, int start) {
             // 패치 전 원본 함수 구하고
             string func = GetOriginalFunc(oldStream, methodName);
             // 주석 제거하고

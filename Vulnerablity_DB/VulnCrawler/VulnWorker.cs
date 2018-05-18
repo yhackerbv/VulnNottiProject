@@ -108,10 +108,13 @@ namespace VulnCrawler
                     {
                         var match = reg as Match;
                         string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value.Trim();
+                        int start = int.Parse(match.Groups[VulnAbstractCrawler.OldStart].Value);
                         Console.WriteLine("methodName = " + methodName);
                         string originalFunc, md5;
                         (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
-                            methodName);
+                            methodName, start);
+
+                        
 
                         #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
 
