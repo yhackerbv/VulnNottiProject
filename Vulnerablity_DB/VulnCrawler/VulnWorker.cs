@@ -61,13 +61,13 @@ namespace VulnCrawler
                     // 출력
                     if (regs.Count > 0)
                     {
-                        //    Console.BackgroundColor = ConsoleColor.DarkBlue;
-                        //    Console.WriteLine($"Old Content: \n{oldContent}");
-                        //    Console.ResetColor();
+                        Console.BackgroundColor = ConsoleColor.DarkBlue;
+                        Console.WriteLine($"Old Content: \n{oldContent}");
+                        Console.ResetColor();
 
-                        //    Console.BackgroundColor = ConsoleColor.DarkMagenta;
-                        //    Console.WriteLine($"New Content: \n{newContent}");
-                        //    Console.ResetColor();
+                        //Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                        //Console.WriteLine($"New Content: \n{newContent}");
+                        //Console.ResetColor();
 
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine($"status: {entry.Status.ToString()}");
@@ -111,12 +111,11 @@ namespace VulnCrawler
                         Console.WriteLine("methodName = " + methodName);
                         string originalFunc, md5;
                         (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
-                            match.Groups[VulnAbstractCrawler.MethodName].Value);
+                            methodName);
 
                         #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
 
-
-
+                        
                         // 패치 전 원본 함수
                         Console.WriteLine($"Original Func: {originalFunc}");
                         // 해쉬 후
@@ -131,8 +130,10 @@ namespace VulnCrawler
 
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Console.WriteLine(e.ToString());
+                    Console.ReadLine();
                     continue;
                 }
 

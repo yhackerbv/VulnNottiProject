@@ -33,46 +33,120 @@ namespace VulnCrawler
 
         protected override string GetOriginalFunc(Stream oldStream, string methodName) {
             StringBuilder oldBuilder = new StringBuilder();
+            methodName = Regex.Escape(methodName);
             using (var reader = new StreamReader(oldStream)) {
-                
+                Console.WriteLine(methodName);
+
+
                 bool found = false;
+                bool found2 = false;
+                bool commentLine = false;
                 int bracketCount = -1;
+                string stringPattern = @"[""].*[""]";
+                string commentPattern = @"\/\*.+\*\/";
+                string commentPattern2 = @"\/\*";
+                string commentPattern3 = @"\*\/";
                 while (!reader.EndOfStream) {
                     string line = reader.ReadLine();
-
+        
+                    // 메서드를 찾은 경우
                     if (found)
                     {
+                        Console.WriteLine("찾았었음");
+                        string trim = line.Trim();
 
-                        int openBracketCount = line.Count(c => c == '{');
-                        int closeBracketCount = line.Count(c => c == '}');
-
-                        if (bracketCount == -1)
+                        if (commentLine)
                         {
-
+                            if (Regex.IsMatch(trim, commentPattern3))
+                            {
+                                commentLine = false;
+                                trim = Regex.Split(trim, commentPattern3)[1];
+                            }
                         }
-                        if (line.Count(c => c == '{') > 0)
+
+                        if (string.IsNullOrWhiteSpace(trim))
                         {
-
+                            continue;
                         }
-                    }
+                        string removeString = Regex.Replace(trim, stringPattern, "");
 
-                    if (Regex.Match(line, $@"{methodName}").Success) {
-                        found = true;
-                        int openBracketCount = line.Count(c => c == '{');
-                        int closeBracketCount = line.Count(c => c == '}');
+                        // /* ~ 패턴
+                        if (Regex.IsMatch(trim, commentPattern2))
+                        {
+                            trim = Regex.Split(trim, "/*")[0];
+                            // /* ~ */ 패턴이 아닌 경우
+                            if (!Regex.IsMatch(trim, commentPattern))
+                            {
+                                commentLine = true;
+                            }
+                        }
+                        int openBracketCount = removeString.Count(c => c == '{');
+                        int closeBracketCount = removeString.Count(c => c == '}');
                         int subtract = openBracketCount - closeBracketCount;
-                        oldBuilder.AppendLine(line);
-
-                        if (subtract < 0)
+                        bracketCount += subtract;
+                        // 메서드 시작 괄호 찾은 경우
+                        if (found2)
                         {
-                            break;
+                            // 괄호가 모두 닫혔으니 종료
+                            if (bracketCount < 0)
+                            {
+                                Console.WriteLine("괄호끝");
+                                break;
+                            }
+                            oldBuilder.AppendLine(line);
                         }
-                        bracketCount = subtract;
-                    }
+                        else
+                        {
+                            if (openBracketCount > 0)
+                            {
+                                found2 = true;
+                            }
 
+                        }
+
+
+                    }
+                    else
+                    {
+                        if (Regex.Match(line, $"{methodName}").Success)
+                        {
+                            
+                            string trim = line.Trim();
+                            if (trim.StartsWith("//"))
+                            {
+                                continue;
+                            }
+
+                            if (trim.StartsWith("/*"))
+                            {
+                                continue;
+                            }
+
+                            if (Regex.Match(trim, $@"""[\s]*({methodName})").Success)
+                            {
+                                continue;
+                            }
+
+                            if (Regex.Match(trim, $@"{methodName}\s*" + @"\{").Success)
+                            {
+                                if (trim.EndsWith("}"))
+                                {
+                                    break;
+                                }
+                                found2 = true;
+                            }
+                            // 메서드 찾음
+                            found = true;
+                            oldBuilder.AppendLine(line);
+                        }
+                    }
                 }
 
             }
+            Console.WriteLine("찾음");
+            Console.WriteLine(oldBuilder.ToString());
+            Console.ReadLine();
+
             return oldBuilder.ToString();
         }
     }
