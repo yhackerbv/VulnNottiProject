@@ -34,6 +34,8 @@ namespace VulnCrawler
                     // 현재 커밋에 대한 패치 엔트리 배열을 출력함
                     PrintPatchEntrys(entrys, crawler, message, cve);
                 }
+                Console.ReadLine();
+
             }
         }
       
@@ -87,15 +89,22 @@ namespace VulnCrawler
                         Console.BackgroundColor = ConsoleColor.DarkRed;
                         Console.WriteLine($"Patched: \n{entry.Patch}");
                         Console.ResetColor();
-
                         var table = self.ExtractGitCriticalMethodTable(entry.Patch);
-                        
                         foreach (var tuple in self.Process(oldBlob, table))
                         {
                             (var methodName, var blocks) = tuple;
-
+                            Console.BackgroundColor = ConsoleColor.DarkRed;
+                            Console.WriteLine($"메서드 이름 : {methodName}");
+                            Console.ResetColor();
+                            //Console.ForegroundColor = ConsoleColor.Blue;
+                            //foreach (var c in )
+                            //{
+                            //    Console.WriteLine(c);
+                            //}
+                            //Console.ResetColor();
                             foreach (var block in blocks)
                             {
+
                                 if (block.HasCritical)
                                 {
                                     Console.BackgroundColor = ConsoleColor.DarkMagenta;
@@ -122,7 +131,7 @@ namespace VulnCrawler
                         //    //}
 
                         //}
-                        Console.ReadLine();
+                       // Console.ReadLine();
                     }
                     else
                     {
@@ -168,9 +177,9 @@ namespace VulnCrawler
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(entry.Patch);
-                    Console.WriteLine(e.ToString());
-                    Console.ReadLine();
+                   // Console.WriteLine(entry.Patch);
+                  //  Console.WriteLine(e.ToString());
+                 //   Console.ReadLine();
                     continue;
                 }
 

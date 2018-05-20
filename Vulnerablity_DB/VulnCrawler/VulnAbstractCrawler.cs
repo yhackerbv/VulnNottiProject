@@ -20,6 +20,7 @@ namespace VulnCrawler
             public bool HasCritical { get; set; }
             public string Code { get; set; }
             public string Hash { get; set; }
+            public IEnumerable<string> CriticalList { get; set; }
 
         }
         protected Regex extractMethodLine;
@@ -245,6 +246,7 @@ namespace VulnCrawler
         public virtual IEnumerable<(string methodName, IList<Block> blocks)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
             foreach (var item in table)
             {
+                // 메서드 이름
                 string methodName = item.Key;
                 // 패치 전 원본 파일 스트림
                 Stream oldStream = oldBlob.GetContentStream();
@@ -255,18 +257,25 @@ namespace VulnCrawler
                 string md5 = string.Empty;
                 if (item.Value.Count() != 0)
                 {
+                    Console.WriteLine("크리티컬 변수 목록");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    foreach (var c in item.Value)
+                    {
+                        Console.WriteLine(c);
+                    }
+                    Console.ResetColor();
+                    Console.WriteLine("-------------------");
                     // 크리티컬 블록 추출
                     var blocks = GetCriticalBlocks(func, item.Value).ToList();
                     if (blocks == null)
                     {
                         continue;
                     }
-
                     foreach (var block in blocks)
                     {
                         block.Hash = MD5HashFunc(block.Code);
+                        block.CriticalList = item.Value;
                     }
-
                     yield return (methodName, blocks);
                 }
                 
