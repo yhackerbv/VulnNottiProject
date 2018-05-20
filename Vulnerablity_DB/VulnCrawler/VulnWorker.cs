@@ -84,17 +84,24 @@ namespace VulnCrawler
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.WriteLine($"Commit Message: {commitMsg}");
                         Console.ResetColor();
-
-
-
                         Console.BackgroundColor = ConsoleColor.DarkRed;
                         Console.WriteLine($"Patched: \n{entry.Patch}");
-
                         Console.ResetColor();
-                        //    Console.WriteLine("-----------");
 
-
-
+                        var table = self.ExtractGitCriticalMethodTable(entry.Patch);
+                        foreach (var item in table)
+                        {
+                            Console.WriteLine($"Method : {item.Key}");
+                            foreach (var b in item.Value)
+                            {
+                                Console.WriteLine($"--{b}");
+                            }
+                        }
+                        Console.ReadLine();
+                    }
+                    else
+                    {
+                        continue;
                     }
 
 
@@ -106,10 +113,11 @@ namespace VulnCrawler
 
                     foreach (var reg in regs)
                     {
+                        
                         var match = reg as Match;
                         string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value.Trim();
-                        int start = int.Parse(match.Groups[VulnAbstractCrawler.OldStart].Value);
-                        Console.WriteLine("methodName = " + methodName);
+                        int start = 0; //int.Parse(match.Groups[VulnAbstractCrawler.OldStart].Value);
+                       // Console.WriteLine("methodName = " + methodName);
                         string originalFunc, md5;
                         (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
                             methodName, start);
@@ -127,14 +135,17 @@ namespace VulnCrawler
                         //Console.WriteLine($"Patched: \n{entry.Patch}");
 
                         Console.ResetColor();
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("==============================");
-
+                        Console.ResetColor();
                         #endregion
 
                     }
+                    Console.ReadLine();
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine(entry.Patch);
                     Console.WriteLine(e.ToString());
                     Console.ReadLine();
                     continue;

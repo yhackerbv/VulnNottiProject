@@ -66,6 +66,7 @@ namespace VulnCrawler
         }
         public static void Run() {
             // Repository 폴더들이 있는 주소를 지정하면 하위 폴더 목록을 가져옴(Repository 목록)
+            
 
             // var fields = VulnWorker.GetCriticalVariant(@"return _is_safe_url(url, host) and _is_safe_url(url.replace('\\', '/'), host)");
             var c = new VulnC();

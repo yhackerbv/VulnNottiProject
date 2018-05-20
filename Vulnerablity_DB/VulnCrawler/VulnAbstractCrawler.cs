@@ -13,11 +13,10 @@ namespace VulnCrawler
     // 추상 클래스
     public abstract class VulnAbstractCrawler
     {
-
+        protected Regex extractMethodLine;
         protected HashSet<string> ReservedList { get; }
         protected abstract string ReservedFileName { get; }
         // = { "if", "return", "break", "while", "typedef" };
-
         /// <summary>
         /// 생성자
         /// 경로를 입력받아서(path)
@@ -25,34 +24,28 @@ namespace VulnCrawler
         /// 커밋 목록을 검색함
         /// </summary>
         /// <param name="path"></param>
-        public VulnAbstractCrawler() {
+        public VulnAbstractCrawler()
+        {
+            extractMethodLine = new Regex(RegexFuncPattern);
             ReservedList = new HashSet<string>();
             LoadReservedList();
-
         }
-
-        
         // 소멸자
         ~VulnAbstractCrawler() {
-
             Repository?.Dispose();
-
         }
-
         private void LoadReservedList()
         {
             try
             {
                 var lines = File.ReadLines(ReservedFileName, Encoding.Default);
                 foreach (var item in lines)
-                {
-                    
+                { 
                     if (string.IsNullOrWhiteSpace(item))
                     {
                         continue;
                     }
-                    ReservedList.Add(item);
-                    
+                    ReservedList.Add(item);  
                 }
             }
             catch(FileNotFoundException)
@@ -61,7 +54,6 @@ namespace VulnCrawler
             }
         }
         protected virtual Regex MethodExtractor => new Regex(RegexFuncPattern);
-
         #region 메서드 패턴 정규식 그룹
         // 정규식 그룹화
         // @@ -oldStart,oldLines +newStart,newLines @@ MethodName():
@@ -112,9 +104,12 @@ namespace VulnCrawler
         /// <param name="oldStream">파일 스트림</param>
         /// <param name="methodName">찾을 메서드 이름</param>
         /// <returns>함수 문자열</returns>
-        protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
-
-        // 테스트용 함수 곧 삭제될 운명
+        protected abstract string GetOriginalFunc(Stream oldStream, string methodName); 
+        
+        /// <summary>
+        /// 성능 개선을 위한
+        /// 코드 라인 위치 기반 취약 원본 함수 추출 테스트용 함수 곧 삭제 예정
+        /// </summary>
         public string GetOriginalFuncTest(Stream oldStream, string methodName, int start)
         {
             StringBuilder oldBuilder = new StringBuilder();
@@ -227,6 +222,9 @@ namespace VulnCrawler
 
             return oldBuilder.ToString();
         }
+
+
+        public abstract IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode);
         /// <summary>
         /// 실제 프로세스
         /// </summary>
@@ -237,9 +235,10 @@ namespace VulnCrawler
             // 패치 전 원본 함수 구하고
             string func = GetOriginalFunc(oldStream, methodName);
             // 주석 제거하고
-         //   func = RemoveComment(func);
+            //func = RemoveComment(func);
             // 해쉬하고
             string md5 = MD5HashFunc(func);
+            // 튜플로 반환
             return (func, md5);
         }
         /// <summary>
@@ -332,11 +331,11 @@ namespace VulnCrawler
                 var method = met as Match;
                 if (method.Success)
                 {
-                    Console.WriteLine(method.Groups[1].Value);
+                  //  Console.WriteLine(method.Groups[1].Value);
                     methodSets.Add(method.Groups[1].Value); // aaaa
                 }
             }
-            Console.WriteLine("----");
+          //  Console.WriteLine("----");
             var vars = Regex.Matches(line, fieldPattern)
                             .Cast<Match>()
                             .Where(m => {
@@ -356,6 +355,12 @@ namespace VulnCrawler
                                 }
                                 /* 예약어 목록에 있으면 넘어감 */
                                 if (ReservedList.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+
+                                /* 알파벳이 하나도 없으면 넘어감 */
+                                if(!m.Value.Any(c => char.IsLetter(c)))
                                 {
                                     return false;
                                 }
