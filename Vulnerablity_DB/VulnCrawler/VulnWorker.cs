@@ -94,6 +94,7 @@ namespace VulnCrawler
                         {
                             (var methodName, var blocks) = tuple;
 
+                            Console.WriteLine($"메서드 이름 : {methodName}");
                             foreach (var block in blocks)
                             {
                                 if (block.HasCritical)
