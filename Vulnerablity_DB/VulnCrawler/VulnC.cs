@@ -229,6 +229,8 @@ namespace VulnCrawler
 
         protected override IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
         {
+           // srcCode = Regex.Replace(srcCode, @"if.+\n\{", @"if.+\{", RegexOptions.Multiline);
+
             var split = srcCode.Split('\n');
             int bracketCount = 0;
             var blockList = new List<Block>();
@@ -238,22 +240,46 @@ namespace VulnCrawler
             {
                 return null;
             }
+            bool hasIf = false;
             bool mainLine = true; /* 현재 라인이 메인 코드 라인인지 */
-            bool criticalBlock = false; /* 현재 라인이 메인 코드 라인인지 */
-            int blockNum = 1; /* 현재 라인이 메인 코드 라인인지 */
+            bool criticalBlock = false; /* 현재 라인이 크리티컬 블록 라인인지 */
+            int blockNum = 1; /* 블록 번호 */
             foreach (var line in split)
             {
+                bool hasRight = false;
+
                 string trim = line.Trim();
+
                 /* 중괄호 수 세기 */
                 int openBracketCount = trim.Count(c => c == '{');
                 int closeBracketCount = trim.Count(c => c == '}');
+                //if (!hasIf)
+                //{
+                //    if (Regex.IsMatch(trim, @"^if.+\)$"))
+                //    {
+                //      //  Console.WriteLine("if 들어감");
+                //        hasIf = true;
+                //    }
+                //}
+                //else
+                //{
+                //    if (!Regex.IsMatch(trim, @"^\{"))
+                //    {
+                //        openBracketCount++;
+                //    }
+                //    hasIf = false;
+                //}
+
+
+
                 int subtract = openBracketCount - closeBracketCount;
                 bracketCount += subtract;
 
+            
                 if (trim.Equals("}"))
                 {
                     builder.AppendLine(line);
-                    continue;
+                    hasRight = true;
                 }
                 /* 중괄호 연산 결과 1이라는 것은 메인 라인 */
                 if (bracketCount == 1)
@@ -313,8 +339,12 @@ namespace VulnCrawler
                     }
                 }
 
-                builder.AppendLine(line);
-
+                if (!hasRight)
+                {
+                    builder.AppendLine(line);
+                    
+                }
+                
             }
 
             /* 마지막 남은게 있을 수 있으니 추가 */
