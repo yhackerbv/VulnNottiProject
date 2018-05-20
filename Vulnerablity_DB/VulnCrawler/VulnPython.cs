@@ -70,5 +70,10 @@ namespace VulnCrawler
         {
             throw new NotImplementedException();
         }
+
+        protected override IList<string> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

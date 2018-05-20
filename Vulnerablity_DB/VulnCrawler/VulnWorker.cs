@@ -89,14 +89,28 @@ namespace VulnCrawler
                         Console.ResetColor();
 
                         var table = self.ExtractGitCriticalMethodTable(entry.Patch);
-                        foreach (var item in table)
+                        string originalFunc = string.Empty, md5 = string.Empty;
+                        foreach (var tuple in self.Process(oldBlob, table))
                         {
-                            Console.WriteLine($"Method : {item.Key}");
-                            foreach (var b in item.Value)
-                            {
-                                Console.WriteLine($"--{b}");
-                            }
+                            Console.WriteLine("===z");
+                            (originalFunc, md5) = tuple;
+                            // 패치 전 원본 함수
+                            Console.WriteLine($"Original Func: {originalFunc}");
+                            // 해쉬 후
+                            Console.WriteLine($"Original Func MD5: {md5}");
+
                         }
+
+
+                        //foreach (var item in table)
+                        //{
+                        //    Console.WriteLine($"Method : {item.Key}");
+                        //    //foreach (var b in item.Value)
+                        //    //{
+                        //    //    Console.WriteLine($"--{b}");
+                        //    //}
+
+                        //}
                         Console.ReadLine();
                     }
                     else
@@ -111,37 +125,35 @@ namespace VulnCrawler
                     // 
                     #endregion
 
-                    foreach (var reg in regs)
-                    {
+                    //foreach (var reg in regs)
+                    //{
                         
-                        var match = reg as Match;
-                        string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value.Trim();
-                        int start = 0; //int.Parse(match.Groups[VulnAbstractCrawler.OldStart].Value);
-                       // Console.WriteLine("methodName = " + methodName);
-                        string originalFunc, md5;
-                        (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
-                            methodName, start);
+                    //    var match = reg as Match;
+                    //    string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value.Trim();
+                    //    string originalFunc, md5;
+                    //    (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
+                    //        methodName);
 
                         
 
-                        #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
+                    //    #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
 
                         
-                        // 패치 전 원본 함수
-                        Console.WriteLine($"Original Func: {originalFunc}");
-                        // 해쉬 후
-                        Console.WriteLine($"Original Func MD5: {md5}");
-                        //Console.BackgroundColor = ConsoleColor.DarkRed;
-                        //Console.WriteLine($"Patched: \n{entry.Patch}");
+                    //    // 패치 전 원본 함수
+                    //    Console.WriteLine($"Original Func: {originalFunc}");
+                    //    // 해쉬 후
+                    //    Console.WriteLine($"Original Func MD5: {md5}");
+                    //    //Console.BackgroundColor = ConsoleColor.DarkRed;
+                    //    //Console.WriteLine($"Patched: \n{entry.Patch}");
 
-                        Console.ResetColor();
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("==============================");
-                        Console.ResetColor();
-                        #endregion
+                    //    Console.ResetColor();
+                    //    Console.ForegroundColor = ConsoleColor.Red;
+                    //    Console.WriteLine("==============================");
+                    //    Console.ResetColor();
+                    //    #endregion
 
-                    }
-                    Console.ReadLine();
+                    //}
+                    //Console.ReadLine();
                 }
                 catch (Exception e)
                 {

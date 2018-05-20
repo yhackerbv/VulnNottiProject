@@ -99,10 +99,8 @@ namespace VulnCrawler
             }
             return table;
         }
-
         protected override string GetOriginalFunc(Stream oldStream, string methodName) {
             StringBuilder oldBuilder = new StringBuilder();
-
             string method = Regex.Escape(methodName);
             using (var reader = new StreamReader(oldStream)) {
                 bool found = false;
@@ -115,12 +113,10 @@ namespace VulnCrawler
                 string commentPattern3 = @"\*\/";
                 while (!reader.EndOfStream) {
                     string line = reader.ReadLine();
-        
                     // 메서드를 찾은 경우
                     if (found)
                     {
                         string trim = line.Trim();
-
                         // 범위 주석 진행되고 있으면 넘어감
                         if (commentLine)
                         {
@@ -135,10 +131,8 @@ namespace VulnCrawler
                                 continue;
                             }
                         }
-
                         // "" 문자열 제거
                         string removeString = Regex.Replace(trim, stringPattern, "");
-
                         // /* ~ 패턴
                         if (Regex.IsMatch(trim, commentPattern2))
                         {
@@ -156,7 +150,6 @@ namespace VulnCrawler
                         {
                             continue;
                         }
-
                         int openBracketCount = removeString.Count(c => c == '{');
                         int closeBracketCount = removeString.Count(c => c == '}');
                         int subtract = openBracketCount - closeBracketCount;
@@ -170,7 +163,6 @@ namespace VulnCrawler
                             {
                                 break;
                             }
-                            
                         }
                         else // 메서드는 찾았으나 아직 시작 괄호를 못찾은 경우
                         {
@@ -189,10 +181,7 @@ namespace VulnCrawler
                                     continue;
                                 }
                             }
-
                         }
-
-
                     }
                     // 아직 메서드를 못찾은 경우
                     else
@@ -217,7 +206,6 @@ namespace VulnCrawler
                             {
                                 continue;
                             }
-
                             // 만약 찾은 메서드 라인에서 중괄호 {가 시작된 경우
                             if (Regex.Match(trim, $@"{method}\s*" + @"\{").Success)
                             {
@@ -235,15 +223,88 @@ namespace VulnCrawler
                         }
                     }
                 }
-
             }
-            //Console.WriteLine(oldBuilder.ToString());
-            //Console.ReadLine();
-
             return oldBuilder.ToString();
         }
 
-        
+        protected override IList<string> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
+        {
+            var split = srcCode.Split('\n');
+            int bracketCount = 0;
+            var blockList = new List<string>();
+            StringBuilder builder = new StringBuilder();
+            var crList = criticalList as HashSet<string>;
+            if (crList == null)
+            {
+                return null;
+            }
+            bool mainLine = true; /* 현재 라인이 메인 코드 라인인지 */
+            foreach (var line in split)
+            {
+                string trim = line.Trim();
+                /* 중괄호 수 세기 */
+                int openBracketCount = trim.Count(c => c == '{');
+                int closeBracketCount = trim.Count(c => c == '}');
+                int subtract = openBracketCount - closeBracketCount;
+                bracketCount += subtract;
 
+                /* 중괄호 연산 결과 1이라는 것은 메인 라인 */
+                if (bracketCount == 1)
+                {
+                    /* 
+                     * 깊이가 1인데 mainLine이 
+                     * false 이면 넘어왔다는 것이니 현재까지 코드
+                     * blockList에 추가
+                     */
+                    if (!mainLine)
+                    {
+                        string s = builder.ToString();
+                        if (!string.IsNullOrWhiteSpace(s))
+                        {
+                            blockList.Add(s);
+                            builder.Clear();
+                        }
+                    }
+                    mainLine = true;
+                }
+                /* 2 이상이라는 건 메인 라인 X */
+                else if(bracketCount >= 2)
+                {
+                    /* 
+                     * 깊이가 2 이상인데 mainLine이 
+                     * true면 넘어왔다는 것이니 현재까지 코드
+                     * blockList에 추가
+                     */
+                    if (mainLine)
+                    {
+                        string s = builder.ToString();
+                        if (!string.IsNullOrWhiteSpace(s))
+                        {
+                            blockList.Add(s);
+                            builder.Clear();
+                        }
+                    }
+                    mainLine = false;
+                }
+                /* 이도 저도 아니면 그냥 넘어감 */
+                else
+                {
+                    continue;
+                }
+
+                /* 현재 코드 라인에서 변수 추출시켜서 크리티컬 리스트와 대조 */
+                foreach (var var in ExtractCriticalVariant(line))
+                {
+                    /* 크리티컬 리스트에 추출한 변수가 들어있다면 추가 */
+                    if (criticalList.Contains(var))
+                    {
+                        builder.AppendLine(line);
+                        break;
+                    }
+                }
+
+            }
+            return blockList;
+        }
     }
 }

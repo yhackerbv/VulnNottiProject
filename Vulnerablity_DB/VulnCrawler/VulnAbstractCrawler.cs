@@ -104,8 +104,9 @@ namespace VulnCrawler
         /// <param name="oldStream">파일 스트림</param>
         /// <param name="methodName">찾을 메서드 이름</param>
         /// <returns>함수 문자열</returns>
-        protected abstract string GetOriginalFunc(Stream oldStream, string methodName); 
-        
+        protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
+
+        protected abstract IList<string> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList);
         /// <summary>
         /// 성능 개선을 위한
         /// 코드 라인 위치 기반 취약 원본 함수 추출 테스트용 함수 곧 삭제 예정
@@ -231,15 +232,33 @@ namespace VulnCrawler
         /// <param name="oldStream"></param>
         /// <param name="methodName"></param>
         /// <returns></returns>
-        public virtual (string originalFunc, string hash) Process(Stream oldStream, string methodName, int start) {
-            // 패치 전 원본 함수 구하고
-            string func = GetOriginalFunc(oldStream, methodName);
-            // 주석 제거하고
-            //func = RemoveComment(func);
-            // 해쉬하고
-            string md5 = MD5HashFunc(func);
-            // 튜플로 반환
-            return (func, md5);
+        public virtual IEnumerable<(string originalFunc, string hash)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
+            foreach (var item in table)
+            {
+                string methodName = item.Key;
+                // 패치 전 원본 파일 스트림
+                Stream oldStream = oldBlob.GetContentStream();
+                // 패치 전 원본 함수 구하고
+                string func = GetOriginalFunc(oldStream, methodName);
+                Console.WriteLine(func);
+                string bs = string.Empty;
+                string md5 = string.Empty;
+                int blockNum = 1;
+                if (item.Value.Count() != 0)
+                {
+                    var blocks = GetCriticalBlocks(func, item.Value);
+                    StringBuilder builder = new StringBuilder();
+                    foreach (var block in blocks)
+                    {
+                        Console.WriteLine($"=====block({blockNum})");
+                        Console.WriteLine(block);
+                        builder.AppendLine(block);
+                    }
+                    bs = builder.ToString();
+                    md5 = MD5HashFunc(bs);
+                }
+                yield return (bs, md5);
+            }
         }
         /// <summary>
         /// 주석 제거 함수
