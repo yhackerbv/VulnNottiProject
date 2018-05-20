@@ -10,7 +10,8 @@ namespace VulnCrawler
 {
     public class VulnC : VulnAbstractCrawler
     {
-        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)?( const )? [\w]+ [\w]+\([\w \*\,\t\n]*[\)\,])";
+//        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)?( const )? [\w]+ [\w]+\([\w \*\,\t\n]*[\)\,])";
+        protected override string RegexFuncPattern => $@"(?<{MethodName}>(unsigned|static)?( const )? [\w]+ [\w]+\(([\w \*\,\t\n])*[\)\,])";
         protected override string Extension => ".c";
         protected override string ReservedFileName => "CReserved.txt";
         public override MatchCollection GetMatches(string patchCode) {
@@ -31,13 +32,79 @@ namespace VulnCrawler
             return replace;
         }
 
+        public override IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode)
+        {
+            var table = new Dictionary<string, IEnumerable<string>>();
+            string prevMethodName = string.Empty;
+            StringBuilder builder = new StringBuilder();
+            // 라인으로 나누고 @@가 시작하는 곳까지 생략
+            var split = Regex.Split(srcCode, "\n").SkipWhile(s => !s.StartsWith("@@")).ToArray();
+            for(int i = 0; i < split.Length; i++)
+            {
+                string line = split[i].Trim();
+                // 문자열 제거
+                line = Regex.Replace(line, @""".+""", "");
+
+                var methodMatch = extractMethodLine.Match(line);
+                string methodName = methodMatch.Groups[MethodName].Value.Trim();
+                // 추가된, 제거된 라인인지 확인
+                if (Regex.IsMatch(line, @"^[+-]\s"))
+                {
+                    // 주석문인지 확인
+                    if (Regex.IsMatch(line, @"^[+-]\s*(\*|\/\*|\*\/)"))
+                    {
+                        continue;
+                    }
+                    Console.WriteLine(line);
+                    builder.AppendLine(line);
+                    continue;
+                }
+                // 메서드 매칭이 성공했거나 마지막 문단일 경우
+                if (methodMatch.Success || i == split.Length - 1)
+                {
+                    if (string.IsNullOrWhiteSpace(prevMethodName))
+                    {
+                        builder.Clear();
+                        prevMethodName = methodName;
+                        continue;
+                    }
+                    if (methodName.Contains("return"))
+                    {
+                        continue;
+                    }
+                    if (methodName.Contains("="))
+                    {
+                        continue;
+                    }
+                    if (!table.ContainsKey(prevMethodName))
+                    {                 
+                        table[prevMethodName] = new HashSet<string>();
+                    }
+                    var list = table[prevMethodName] as HashSet<string>;
+                    foreach (var b in Regex.Split(builder.ToString(), "\n"))
+                    {
+                        // 각 수집된 라인 별로 크리티컬 변수 선정
+                        foreach (var var in ExtractCriticalVariant(b))
+                        {
+                            if (string.IsNullOrWhiteSpace(var))
+                            {
+                                continue;
+                            }
+                            list.Add(var);
+                        }
+                    }
+                    prevMethodName = methodName;
+                    builder.Clear();
+                }
+            }
+            return table;
+        }
+
         protected override string GetOriginalFunc(Stream oldStream, string methodName) {
             StringBuilder oldBuilder = new StringBuilder();
-            methodName = Regex.Escape(methodName);
+
+            string method = Regex.Escape(methodName);
             using (var reader = new StreamReader(oldStream)) {
-                Console.WriteLine(methodName);
-
-
                 bool found = false;
                 bool found2 = false;
                 bool commentLine = false;
@@ -131,7 +198,7 @@ namespace VulnCrawler
                     else
                     {
                         // 메서드 찾았는지 확인
-                        if (Regex.Match(line, $"{methodName}").Success)
+                        if (Regex.Match(line, $"{method}").Success)
                         {
                             string trim = line.Trim();
                             // 주석으로 시작했다면 넘어감
@@ -146,13 +213,13 @@ namespace VulnCrawler
                             }
                             
                             // 혹시 메서드가 문자열 사이에 있다면 넘어감..
-                            if (Regex.Match(trim, $@"""[.]*({methodName})").Success)
+                            if (Regex.Match(trim, $@"""[.]*({method})").Success)
                             {
                                 continue;
                             }
 
                             // 만약 찾은 메서드 라인에서 중괄호 {가 시작된 경우
-                            if (Regex.Match(trim, $@"{methodName}\s*" + @"\{").Success)
+                            if (Regex.Match(trim, $@"{method}\s*" + @"\{").Success)
                             {
                                 // 동시에 } 닫히기까지 한 경우 드물겠지만..
                                 if (trim.EndsWith("}"))
@@ -170,8 +237,8 @@ namespace VulnCrawler
                 }
 
             }
-            Console.WriteLine(oldBuilder.ToString());
-            Console.ReadLine();
+            //Console.WriteLine(oldBuilder.ToString());
+            //Console.ReadLine();
 
             return oldBuilder.ToString();
         }

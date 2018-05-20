@@ -65,5 +65,10 @@ namespace VulnCrawler
             }
             return replace;
         }
+
+        public override IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
