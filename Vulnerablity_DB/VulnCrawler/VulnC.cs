@@ -227,11 +227,11 @@ namespace VulnCrawler
             return oldBuilder.ToString();
         }
 
-        protected override IList<string> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
+        protected override IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
         {
             var split = srcCode.Split('\n');
             int bracketCount = 0;
-            var blockList = new List<string>();
+            var blockList = new List<Block>();
             StringBuilder builder = new StringBuilder();
             var crList = criticalList as HashSet<string>;
             if (crList == null)
@@ -239,6 +239,8 @@ namespace VulnCrawler
                 return null;
             }
             bool mainLine = true; /* 현재 라인이 메인 코드 라인인지 */
+            bool criticalBlock = false; /* 현재 라인이 메인 코드 라인인지 */
+            int blockNum = 1; /* 현재 라인이 메인 코드 라인인지 */
             foreach (var line in split)
             {
                 string trim = line.Trim();
@@ -248,6 +250,11 @@ namespace VulnCrawler
                 int subtract = openBracketCount - closeBracketCount;
                 bracketCount += subtract;
 
+                if (trim.Equals("}"))
+                {
+                    builder.AppendLine(line);
+                    continue;
+                }
                 /* 중괄호 연산 결과 1이라는 것은 메인 라인 */
                 if (bracketCount == 1)
                 {
@@ -261,7 +268,9 @@ namespace VulnCrawler
                         string s = builder.ToString();
                         if (!string.IsNullOrWhiteSpace(s))
                         {
-                            blockList.Add(s);
+                            blockList.Add(new Block() { HasCritical = criticalBlock, Code = s, Num = blockNum });
+                            blockNum++;
+                            criticalBlock = false;
                             builder.Clear();
                         }
                     }
@@ -280,7 +289,9 @@ namespace VulnCrawler
                         string s = builder.ToString();
                         if (!string.IsNullOrWhiteSpace(s))
                         {
-                            blockList.Add(s);
+                            blockList.Add(new Block() { HasCritical = criticalBlock, Code = s, Num = blockNum });
+                            blockNum++;
+                            criticalBlock = false;
                             builder.Clear();
                         }
                     }
@@ -291,19 +302,31 @@ namespace VulnCrawler
                 {
                     continue;
                 }
-
                 /* 현재 코드 라인에서 변수 추출시켜서 크리티컬 리스트와 대조 */
                 foreach (var var in ExtractCriticalVariant(line))
                 {
                     /* 크리티컬 리스트에 추출한 변수가 들어있다면 추가 */
                     if (criticalList.Contains(var))
                     {
-                        builder.AppendLine(line);
+                        criticalBlock = true;
                         break;
                     }
                 }
 
+                builder.AppendLine(line);
+
             }
+
+            /* 마지막 남은게 있을 수 있으니 추가 */
+            string fs = builder.ToString();
+            if (!string.IsNullOrWhiteSpace(fs))
+            {
+                blockList.Add(new Block() { HasCritical = criticalBlock, Code = fs, Num = blockNum });
+                blockNum++;
+                criticalBlock = false;
+                builder.Clear();
+            }
+
             return blockList;
         }
     }

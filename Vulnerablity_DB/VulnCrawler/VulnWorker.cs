@@ -89,15 +89,26 @@ namespace VulnCrawler
                         Console.ResetColor();
 
                         var table = self.ExtractGitCriticalMethodTable(entry.Patch);
-                        string originalFunc = string.Empty, md5 = string.Empty;
+                        
                         foreach (var tuple in self.Process(oldBlob, table))
                         {
-                            Console.WriteLine("===z");
-                            (originalFunc, md5) = tuple;
-                            // 패치 전 원본 함수
-                            Console.WriteLine($"Original Func: {originalFunc}");
-                            // 해쉬 후
-                            Console.WriteLine($"Original Func MD5: {md5}");
+                            (var methodName, var blocks) = tuple;
+
+                            foreach (var block in blocks)
+                            {
+                                if (block.HasCritical)
+                                {
+                                    Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                                }
+                                else
+                                {
+                                    Console.BackgroundColor = ConsoleColor.DarkGreen;
+                                }
+                                Console.WriteLine($"=====block({block.Num}, {block.HasCritical.ToString()})");
+                                Console.WriteLine(block.Code);
+                                Console.ResetColor();
+                                Console.WriteLine($"MD5 = {block.Hash}");
+                            }
 
                         }
 

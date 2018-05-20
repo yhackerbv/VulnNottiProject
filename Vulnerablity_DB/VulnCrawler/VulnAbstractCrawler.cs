@@ -10,9 +10,18 @@ using System.Threading.Tasks;
 
 namespace VulnCrawler
 {
+
     // 추상 클래스
     public abstract class VulnAbstractCrawler
     {
+        public class Block
+        {
+            public int Num { get; set; }
+            public bool HasCritical { get; set; }
+            public string Code { get; set; }
+            public string Hash { get; set; }
+
+        }
         protected Regex extractMethodLine;
         protected HashSet<string> ReservedList { get; }
         protected abstract string ReservedFileName { get; }
@@ -106,7 +115,7 @@ namespace VulnCrawler
         /// <returns>함수 문자열</returns>
         protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
 
-        protected abstract IList<string> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList);
+        protected abstract IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList);
         /// <summary>
         /// 성능 개선을 위한
         /// 코드 라인 위치 기반 취약 원본 함수 추출 테스트용 함수 곧 삭제 예정
@@ -226,13 +235,14 @@ namespace VulnCrawler
 
 
         public abstract IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode);
+
         /// <summary>
-        /// 실제 프로세스
+        /// 패치 전 코드 파일과 크리티컬 메서드 테이블로 부터 크리티컬 블록 추출
         /// </summary>
-        /// <param name="oldStream"></param>
-        /// <param name="methodName"></param>
+        /// <param name="oldBlob">패치 전 파일 Blob</param>
+        /// <param name="table">크리티컬 메서드 테이블(Key: 메서드 이름, Value: 변수 리스트)</param>
         /// <returns></returns>
-        public virtual IEnumerable<(string originalFunc, string hash)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
+        public virtual IEnumerable<(string methodName, IList<Block> blocks)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
             foreach (var item in table)
             {
                 string methodName = item.Key;
@@ -243,21 +253,23 @@ namespace VulnCrawler
                 Console.WriteLine(func);
                 string bs = string.Empty;
                 string md5 = string.Empty;
-                int blockNum = 1;
                 if (item.Value.Count() != 0)
                 {
-                    var blocks = GetCriticalBlocks(func, item.Value);
-                    StringBuilder builder = new StringBuilder();
+                    // 크리티컬 블록 추출
+                    var blocks = GetCriticalBlocks(func, item.Value).ToList();
+                    if (blocks == null)
+                    {
+                        continue;
+                    }
+
                     foreach (var block in blocks)
                     {
-                        Console.WriteLine($"=====block({blockNum})");
-                        Console.WriteLine(block);
-                        builder.AppendLine(block);
+                        block.Hash = MD5HashFunc(block.Code);
                     }
-                    bs = builder.ToString();
-                    md5 = MD5HashFunc(bs);
+
+                    yield return (methodName, blocks);
                 }
-                yield return (bs, md5);
+                
             }
         }
         /// <summary>
@@ -274,7 +286,6 @@ namespace VulnCrawler
         /// <returns>커밋 목록</returns>
         public virtual IEnumerable<Commit> SearchCommits() {
             // where => 조건에 맞는 것을 찾음(CVE-20\d\d-\d{4}로 시작하는 커밋만 골라냄)
-            Console.WriteLine("출력중");
             Console.WriteLine(Repository.Commits.Count());
             var commits = Repository.Commits
                                     .Where(c => Regex.Match(c.Message, SearchCommitPattern, RegexOptions.IgnoreCase).Success)
