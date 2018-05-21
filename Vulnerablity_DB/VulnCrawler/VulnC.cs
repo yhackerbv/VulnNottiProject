@@ -240,126 +240,117 @@ namespace VulnCrawler
             {
                 return null;
             }
-            bool hasIf = false;
-            string prevLine = string.Empty;
             bool mainLine = true; /* 현재 라인이 메인 코드 라인인지 */
-            bool criticalBlock = false; /* 현재 라인이 크리티컬 블록 라인인지 */
+           
             int blockNum = 1; /* 블록 번호 */
+            
+
+            bool group = false;
+            Queue<string> groupQ = new Queue<string>();
+            var mainQ = new Queue<string>();
             
             foreach (var line in split)
             {
-                bool hasRight = false;
-                bool hasIf2 = false;
-                
+                bool criticalBlock = false; /* 현재 라인이 크리티컬 블록 라인인지 */
+
                 string trim = line.Trim();
 
-                /* 중괄호 수 세기 */
-                int openBracketCount = trim.Count(c => c == '{');
-                int closeBracketCount = trim.Count(c => c == '}');
-
-                int subtract = openBracketCount - closeBracketCount;
-                bracketCount += subtract;
-
-            
-                if (trim.Equals("}"))
+                if (Regex.IsMatch(trim, @"^(if|for|while)"))
                 {
-                    builder.AppendLine(line);
-                    hasRight = true;
-                }
-                /* 중괄호 연산 결과 1이라는 것은 메인 라인 */
-                if (bracketCount == 1)
-                {
-                    if (!hasIf)
-                    {
-                        if (Regex.IsMatch(trim, @"^(if|for|while).+\)$"))
-                        {
-                            prevLine = line;
-                            hasIf = true;
-                        }
-                    }
-                    else
-                    {
-                        if (!trim.StartsWith("{"))
-                        {
-                            hasIf2 = true;
-                            builder.AppendLine(line);
-                        }
-                        hasIf = false;
-                    }
-                    /* 
-                     * 깊이가 1인데 mainLine이 
-                     * false 이면 넘어왔다는 것이니 현재까지 코드
-                     * blockList에 추가
-                     */
-                    if (!mainLine || hasIf2)
-                    {
-                        string s = builder.ToString();
-                        if (!string.IsNullOrWhiteSpace(s))
-                        {
-                            blockList.Add(new Block() { HasCritical = criticalBlock, Code = s, Num = blockNum });
-                            blockNum++;
-                            criticalBlock = false;
-                            builder.Clear();
-                        }
-                        
-                    }
-                    mainLine = true;
-                }
-                /* 2 이상이라는 건 메인 라인 X */
-                else if(bracketCount >= 2)
-                {
-                    /* 
-                     * 깊이가 2 이상인데 mainLine이 
-                     * true면 넘어왔다는 것이니 현재까지 코드
-                     * blockList에 추가
-                     */
-                    if (mainLine)
-                    {
-                        string s = builder.ToString();
-                        if (!string.IsNullOrWhiteSpace(s))
-                        {
-                            blockList.Add(new Block() { HasCritical = criticalBlock, Code = s, Num = blockNum });
-                            blockNum++;
-                            criticalBlock = false;
-                            builder.Clear();
-                        }
-                    }
+                    group = true;
                     mainLine = false;
-                }
-                /* 이도 저도 아니면 그냥 넘어감 */
-                else
-                {
+                    groupQ.Enqueue(line);
+                    if (trim.EndsWith("{"))
+                    {
+                        group = true;
+                    }
+                    else if (trim.EndsWith("}"))
+                    {
+                        group = false;
+                    }
+                    else if(trim.EndsWith(";"))
+                    {
+                        group = false;
+                    }
                     continue;
                 }
-                /* 현재 코드 라인에서 변수 추출시켜서 크리티컬 리스트와 대조 */
-                foreach (var var in ExtractCriticalVariant(line))
+
+                if (group)
                 {
-                    /* 크리티컬 리스트에 추출한 변수가 들어있다면 추가 */
-                    if (criticalList.Contains(var))
+                    groupQ.Enqueue(line);
+                    if (trim.EndsWith("}"))
                     {
-                        criticalBlock = true;
-                        break;
+                        group = false;
+                    }
+                    else if (trim.EndsWith(";"))
+                    {
+                        group = false;
+                    }
+                    continue;
+                }
+
+                mainQ.Enqueue(line);
+
+                StringBuilder mainBuilder = new StringBuilder();
+                if (!mainLine)
+                {
+                    while(mainQ.Count > 0)
+                    {
+                        string s = mainQ.Dequeue();
+                        if (!criticalBlock)
+                        {
+                            foreach (var var in ExtractCriticalVariant(s))
+                            {
+                                if (crList.Contains(var))
+                                {
+                                    criticalBlock = true;
+                                    break;
+                                }
+                            }
+                        }
+                        mainBuilder.AppendLine(s);
+                    }
+                    if (mainBuilder.Length > 0)
+                    {
+                        blockList.Add(new Block { Code = mainBuilder.ToString(), HasCritical = criticalBlock, Num = blockNum++ });
+                        //continue;
                     }
                 }
 
-                if (!hasRight && !hasIf2)
+                StringBuilder groupBuilder = new StringBuilder();
+                while (groupQ.Count > 0)
                 {
-                    builder.AppendLine(line);
-                    
+                    var s = groupQ.Dequeue();
+                    if (!criticalBlock)
+                    {
+                        foreach (var var in ExtractCriticalVariant(s))
+                        {
+                            if (crList.Contains(var))
+                            {
+                                criticalBlock = true;
+                                break;
+                            }
+                        }
+                    }
+                    groupBuilder.AppendLine(s);
                 }
-                
+                if (groupBuilder.Length > 0)
+                {
+                    blockList.Add(new Block { Code = groupBuilder.ToString(), HasCritical = criticalBlock, Num = blockNum++ });
+                    continue;
+                }
+
+
+
+
+                mainLine = true;
+
+
+
+
             }
 
-            /* 마지막 남은게 있을 수 있으니 추가 */
-            string fs = builder.ToString();
-            if (!string.IsNullOrWhiteSpace(fs))
-            {
-                blockList.Add(new Block() { HasCritical = criticalBlock, Code = fs, Num = blockNum });
-                blockNum++;
-                criticalBlock = false;
-                builder.Clear();
-            }
-
+            Console.WriteLine("끝");
             return blockList;
         }
     }
