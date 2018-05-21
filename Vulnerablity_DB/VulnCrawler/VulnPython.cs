@@ -8,9 +8,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 namespace VulnCrawler
 {
-
-
-    
     /// <summary>
     /// 파이썬 크롤러
     /// </summary>
@@ -67,6 +64,16 @@ namespace VulnCrawler
                 replace = Regex.Replace(txt, sb.ToString(), "");
             }
             return replace;
+        }
+
+        public override IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
+        {
+            throw new NotImplementedException();
         }
     }
 }

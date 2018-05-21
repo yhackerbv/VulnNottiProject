@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using MySql.Data.MySqlClient;
 
 // 참고(C# mysql 연결)
 #region MySql 연결
@@ -40,6 +40,8 @@ namespace AWS_Center
 {
     public static class VulnRDS
     {
+        public static MySqlConnection Conn { get; set; }
+
         public class Vuln
         {
             public int Len { get; set; } /* 발견된 취약점 함수 PreFunc 부분의 코드 길이 */
@@ -54,10 +56,30 @@ namespace AWS_Center
             // 생성자
             public Vuln()
             {
-                
+
+
             }
 
-        
+
+        }
+
+        //connect
+        public static void Connect()
+        {
+            MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder()
+            {
+                Server = "vulndb.cby38wfppa7l.us-east-2.rds.amazonaws.com",
+                UserID = "yhackerbv",
+                Password = "guswhd12",
+                Database = "vuln",
+                Port = 3306,
+            };
+            string strConn = builder.ToString();
+            builder = null;
+            Conn = new MySqlConnection(strConn);
+
+
+
         }
         public static void InsertVulnData(int _len, string _repoName, string _cve, string _funcName,
                                             string _preFunc, string _afterFunc, string _hash)
@@ -66,11 +88,16 @@ namespace AWS_Center
              * DB에 취약점 데이터가 이미 있는지 검사해야함
              * 
              */
+
+            Conn.Open();
+
+
+
         }
 
-        public static IEnumerable<string> SearchVulnData(int _len)
-        {
-
-        }
+        //public static IEnumerable<string> SearchVulnData(int _len)
+        //{
+        //
+        //}
     }
 }

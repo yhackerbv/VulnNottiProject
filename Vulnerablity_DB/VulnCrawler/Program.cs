@@ -66,16 +66,17 @@ namespace VulnCrawler
         }
         public static void Run() {
             // Repository 폴더들이 있는 주소를 지정하면 하위 폴더 목록을 가져옴(Repository 목록)
+            
 
             // var fields = VulnWorker.GetCriticalVariant(@"return _is_safe_url(url, host) and _is_safe_url(url.replace('\\', '/'), host)");
             var c = new VulnC();
-            var fields = c.ExtractCriticalVariant(@"!DoReadFile (infile, &ds64_chunk, sizeof (DS64Chunk), &bcount) ||/* aaaa */");
+            var fields = c.ExtractCriticalVariant(@"if (s->session->peer != s->session->sess_cert->peer_key->x509)");
             foreach (var item in fields)
             {
                 Console.WriteLine(item);
             }
            // return;
-            var directorys = Directory.GetDirectories(@"c:\VulnPy");
+            var directorys = Directory.GetDirectories(@"c:\VulnC");
             if (directorys.Length == 0) {
                 Console.WriteLine("Repository 목록 찾기 실패");
                 return;
@@ -83,7 +84,7 @@ namespace VulnCrawler
             // Repository 목록 만큼 반복함.
             foreach (var directory in directorys) {
                 // 템플릿 패턴화 T : VulnAbstractCrawler
-                VulnWorker.Run<VulnPython>(directory);
+                VulnWorker.Run<VulnC>(directory);
             }
         }
 
