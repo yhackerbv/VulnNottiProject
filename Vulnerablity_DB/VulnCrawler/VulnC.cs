@@ -241,36 +241,21 @@ namespace VulnCrawler
                 return null;
             }
             bool hasIf = false;
+            string prevLine = string.Empty;
             bool mainLine = true; /* 현재 라인이 메인 코드 라인인지 */
             bool criticalBlock = false; /* 현재 라인이 크리티컬 블록 라인인지 */
             int blockNum = 1; /* 블록 번호 */
+            
             foreach (var line in split)
             {
                 bool hasRight = false;
-
+                bool hasIf2 = false;
+                
                 string trim = line.Trim();
 
                 /* 중괄호 수 세기 */
                 int openBracketCount = trim.Count(c => c == '{');
                 int closeBracketCount = trim.Count(c => c == '}');
-                //if (!hasIf)
-                //{
-                //    if (Regex.IsMatch(trim, @"^if.+\)$"))
-                //    {
-                //      //  Console.WriteLine("if 들어감");
-                //        hasIf = true;
-                //    }
-                //}
-                //else
-                //{
-                //    if (!Regex.IsMatch(trim, @"^\{"))
-                //    {
-                //        openBracketCount++;
-                //    }
-                //    hasIf = false;
-                //}
-
-
 
                 int subtract = openBracketCount - closeBracketCount;
                 bracketCount += subtract;
@@ -284,12 +269,29 @@ namespace VulnCrawler
                 /* 중괄호 연산 결과 1이라는 것은 메인 라인 */
                 if (bracketCount == 1)
                 {
+                    if (!hasIf)
+                    {
+                        if (Regex.IsMatch(trim, @"^(if|for|while).+\)$"))
+                        {
+                            prevLine = line;
+                            hasIf = true;
+                        }
+                    }
+                    else
+                    {
+                        if (!trim.StartsWith("{"))
+                        {
+                            hasIf2 = true;
+                            builder.AppendLine(line);
+                        }
+                        hasIf = false;
+                    }
                     /* 
                      * 깊이가 1인데 mainLine이 
                      * false 이면 넘어왔다는 것이니 현재까지 코드
                      * blockList에 추가
                      */
-                    if (!mainLine)
+                    if (!mainLine || hasIf2)
                     {
                         string s = builder.ToString();
                         if (!string.IsNullOrWhiteSpace(s))
@@ -299,6 +301,7 @@ namespace VulnCrawler
                             criticalBlock = false;
                             builder.Clear();
                         }
+                        
                     }
                     mainLine = true;
                 }
@@ -339,7 +342,7 @@ namespace VulnCrawler
                     }
                 }
 
-                if (!hasRight)
+                if (!hasRight && !hasIf2)
                 {
                     builder.AppendLine(line);
                     
