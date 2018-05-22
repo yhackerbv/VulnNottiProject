@@ -382,11 +382,18 @@ namespace VulnCrawler
                                 {
                                     return false;
                                 }
+
+                                /* 대문자로 구성된 변수면 넘어감 */
+                                if (m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
+                                {
+                                    return false;
+                                }
                                 /* 제일 앞자리가 숫자로 시작하면 넘어감 */
                                 if (Regex.IsMatch(m.Value, invalidPattern))
                                 {
                                     return false;
                                 }
+                                
                                 /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
                                 if (methodSets.Contains(m.Value))
                                 {
@@ -403,6 +410,8 @@ namespace VulnCrawler
                                 {
                                     return false;
                                 }
+
+                                
                                 return true;
                             })
                             .Distinct(new MatchComparer());
