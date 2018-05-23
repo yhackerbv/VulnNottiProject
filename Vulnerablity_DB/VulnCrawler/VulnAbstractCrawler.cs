@@ -127,8 +127,6 @@ namespace VulnCrawler
             
             using (var reader = new StreamReader(oldStream))
             {
-
-
                 bool found = false;
                 bool found2 = false;
                 bool commentLine = false;
@@ -142,8 +140,6 @@ namespace VulnCrawler
                 while (!reader.EndOfStream)
                 {
                     string line = reader.ReadLine();
-
-
                     if (readCount++ < start)
                     {
                         tempQ.Enqueue(line);
@@ -157,16 +153,13 @@ namespace VulnCrawler
                         string method = Regex.Escape(methodName);
                         if (Regex.Match(s, $"{method}").Success)
                         {
-
                             break;
                         }
                     }
-
                     while (tempStack.Count > 0)
                     {
                         string s = tempStack.Pop();
                         string trim = s.Trim();
-
                         if (commentLine)
                         {
                             if (Regex.IsMatch(trim, commentPattern3))
@@ -176,27 +169,21 @@ namespace VulnCrawler
                             }
                             continue;
                         }
-
-
                         string removeString = Regex.Replace(trim, stringPattern, "");
-
                         // /* ~ 패턴
                         if (Regex.IsMatch(trim, commentPattern2))
                         {
-
                             // /* ~ */ 패턴이 아닌 경우
                             if (!Regex.IsMatch(trim, commentPattern))
                             {
                                 commentLine = true;
                             }
                             trim = Regex.Split(trim, "/*")[0];
-
                         }
                         if (string.IsNullOrWhiteSpace(trim))
                         {
                             continue;
                         }
-
                         int openBracketCount = removeString.Count(c => c == '{');
                         int closeBracketCount = removeString.Count(c => c == '}');
                         int subtract = openBracketCount - closeBracketCount;
@@ -222,10 +209,7 @@ namespace VulnCrawler
                         }
                         oldBuilder.AppendLine(s);
                     }
-
-
                 }
-
             }
             Console.WriteLine("찾음");
             Console.WriteLine(oldBuilder.ToString());
@@ -233,8 +217,6 @@ namespace VulnCrawler
 
             return oldBuilder.ToString();
         }
-
-
         public abstract IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode);
 
         /// <summary>

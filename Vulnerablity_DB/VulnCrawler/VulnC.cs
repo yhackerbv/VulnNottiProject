@@ -229,9 +229,7 @@ namespace VulnCrawler
 
         protected override IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
         {
-           // srcCode = Regex.Replace(srcCode, @"if.+\n\{", @"if.+\{", RegexOptions.Multiline);
-
-            var split = srcCode.Split('\n');
+            
             var blockList = new List<Block>();
             StringBuilder builder = new StringBuilder();
             var crList = criticalList as HashSet<string>;
@@ -239,34 +237,33 @@ namespace VulnCrawler
             {
                 return null;
             }
-
+            var split = srcCode.Split('\n');
             var mainQ = new Queue<string>();
             var groupQ = new Queue<string>();
             bool mainLine = true;
             int crNum = 1;
             int bracketCount = 1;
             bool prevStartBlock = false;
+            int totalSoBracketCount = 0;
             foreach (var line in split)
             {
+
                 bool criticalBlock = false;
                 string trimLine = line.Trim();
+                if (string.IsNullOrWhiteSpace(trimLine))
+                {
+                    continue;
+                }
                 if (mainLine)
                 {
-                    if (trimLine.EndsWith("&&") || trimLine.EndsWith("||"))
-                    {
-                        mainQ.Enqueue(line);
-                        continue;
-                    }
-
-                    if (trimLine.StartsWith("&&") || trimLine.StartsWith("||"))
+                    bracketCount = 1;
+                    if (trimLine.StartsWith("else"))
                     {
                         groupQ.Enqueue(line);
+                        mainLine = false;
                         continue;
                     }
 
-
-
-                    bracketCount = 1;
                     StringBuilder groupBuilder = new StringBuilder();
                     while(groupQ.Count > 0)
                     {
@@ -284,15 +281,23 @@ namespace VulnCrawler
                         }
                         groupBuilder.AppendLine(s);
                     }
-
-                    if (groupBuilder.Length > 0)
+                    if (!string.IsNullOrWhiteSpace(groupBuilder.ToString()))
                     {
                         blockList.Add(new Block { Code = groupBuilder.ToString(), HasCritical = criticalBlock, Num = crNum++});
                     }
-                    if (Regex.IsMatch(trimLine, @"(if|for|while|switch|do)\s*"))
+
+                    if (Regex.IsMatch(trimLine, @"^(if|for|while|switch|do)\s*"))
                     {
+                        /* syntax를 만났을 때 끝에 {가 없으면 */
                         if (!trimLine.EndsWith("{"))
                         {
+                            int soBracketOpenCount = trimLine.Count(c => c == '(');
+                            int soBracketCloseCount = trimLine.Count(c => c == ')');
+                            totalSoBracketCount = (soBracketOpenCount - soBracketCloseCount);
+                            /* if(s()
+                             *  && b) 
+                             * 이렇게 소괄호가 안맞고 밑 라인에서 이어서 작성하는 경우
+                             */
                             mainLine = false;
                             prevStartBlock = true;
                             
@@ -312,36 +317,31 @@ namespace VulnCrawler
 
                         continue;
                     }
+
+
                     mainQ.Enqueue(line);
                 }
                 else
                 {
-                    
-
+                    /* 소괄호 수 세기 */
+                    int soBracketOpenCount = trimLine.Count(c => c == '(');
+                    int soBracketCloseCount = trimLine.Count(c => c == ')');
                     /* 중괄호 수 세기 */
                     int openBracketCount = trimLine.Count(c => c == '{');
                     int closeBracketCount = trimLine.Count(c => c == '}');
                     int subtract = openBracketCount - closeBracketCount;
                     bracketCount += subtract;
-
-
-                    if (trimLine.EndsWith("&&") || trimLine.EndsWith("||"))
-                    {
-                        groupQ.Enqueue(line);
-                        continue;
-                    }
-
-                    //if (trimLine.StartsWith("&&") || trimLine.StartsWith("||"))
-                    //{
-                    //    mainQ.Enqueue(line);
-                    //    continue;
-
-                    //}
                     groupQ.Enqueue(line);
                     if (prevStartBlock)
                     {
+                        totalSoBracketCount += (soBracketOpenCount - soBracketCloseCount);
                         prevStartBlock = false;
-                        if (Regex.IsMatch(trimLine, @"(if|for|while|switch|do)\s*\("))
+                        if(totalSoBracketCount > 0)
+                        {
+                            prevStartBlock = true;
+                            continue;
+                        }
+                        else if (Regex.IsMatch(trimLine, @"^(if|for|while|switch|do)\s*"))
                         {
                             prevStartBlock = true;
                             continue;
@@ -355,6 +355,15 @@ namespace VulnCrawler
 
                     if (bracketCount <= 1)
                     {
+                        if (soBracketOpenCount > soBracketCloseCount)
+                        {
+                            continue;
+                        }
+
+                        if (!(trimLine.EndsWith("}") || trimLine.EndsWith(";")))
+                        {
+                            continue;
+                        }
                         if (trimLine.Contains("else"))
                         {
                             bracketCount++;
@@ -365,12 +374,14 @@ namespace VulnCrawler
                         mainLine = true;
                     }
 
+                    /* 메인 라인 블록 추가 */
                     StringBuilder mainBuilder = new StringBuilder();
                     while (mainQ.Count > 0)
                     {
                         string s = mainQ.Dequeue();
                         if (!criticalBlock)
                         {
+                            /* 크리티칼 블록 선정 */
                             foreach (var item in ExtractCriticalVariant(s))
                             {
                                 if (crList.Contains(item))
@@ -382,10 +393,10 @@ namespace VulnCrawler
                         }
                         mainBuilder.AppendLine(s);
                     }
-
-                    if (mainBuilder.Length > 0)
+                    string mains = mainBuilder.ToString();
+                    if (!string.IsNullOrWhiteSpace(mains))
                     {
-                        blockList.Add(new Block { Code = mainBuilder.ToString(), HasCritical = criticalBlock, Num = crNum++ });
+                        blockList.Add(new Block { Code = mains, HasCritical = criticalBlock, Num = crNum++ });
                     }
 
 
