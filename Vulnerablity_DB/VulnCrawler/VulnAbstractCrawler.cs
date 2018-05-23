@@ -20,6 +20,7 @@ namespace VulnCrawler
             public bool HasCritical { get; set; }
             public string Code { get; set; }
             public string Hash { get; set; }
+            public string AbsCode { get; set; }
             public IEnumerable<string> CriticalList { get; set; }
 
         }
@@ -219,6 +220,7 @@ namespace VulnCrawler
         }
         public abstract IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode);
 
+        public abstract string Abstract(string blockCode, IDictionary<string, string> dict, IDictionary<string, string> methodDict);
         /// <summary>
         /// 패치 전 코드 파일과 크리티컬 메서드 테이블로 부터 크리티컬 블록 추출
         /// </summary>
@@ -228,6 +230,8 @@ namespace VulnCrawler
         public virtual IEnumerable<(string methodName, IList<Block> blocks)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
             foreach (var item in table)
             {
+                var methodTable = new Dictionary<string, string>();
+                var varTable = new Dictionary<string, string>();
                 // 메서드 이름
                 string methodName = item.Key;
                 // 패치 전 원본 파일 스트림
@@ -255,8 +259,24 @@ namespace VulnCrawler
                     }
                     foreach (var block in blocks)
                     {
-                        block.Hash = MD5HashFunc(block.Code);
+                        
                         block.CriticalList = item.Value;
+                        block.AbsCode = Abstract(block.Code, varTable, methodTable);
+                        block.Hash = MD5HashFunc(block.AbsCode);
+
+                    }
+
+                    /* 추상화 및 정규화 */
+                    foreach (var block in blocks)
+                    {
+                        string code = block.Code;
+
+                    }
+
+
+                    foreach (var var in varTable)
+                    {
+                        Console.WriteLine($"{var.Key}, {var.Value}");
                     }
                     yield return (methodName, blocks);
                 }
@@ -298,13 +318,173 @@ namespace VulnCrawler
             }
             return string.Empty;
         }
+        
+
+        public MethodVarList ExtractMethodVariantList(string line, bool skipDefine=true)
+        {
+            line = line.Trim();
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return null;
+            }
+            if (line.StartsWith("//"))
+            {
+                return null;
+            }
+            var methodVarList = new MethodVarList() { Methods = new List<string>(), Vars = new List<string>() };
+            string declarePattern = @"(?<Declare>[a-zA-Z0-9_\.]+)\s+[a-zA-Z0-9_\.]+\s*(=|;|,)";
+            // 메서드 정규식 패턴
+            string methodPattern = @"([a-zA-Z0-9_\.]+)\s*\(";
+            // 변수 정규식 패턴
+            string fieldPattern = @"\*?(?<Field>[a-zA-Z0-9_\.\[\]\-\>]+)";
+            string fieldArrayPattern = @"(?<ArrayName>[a-zA-Z0-9_\.]+)\[.+\]";
+            string invalidPattern = @"^[\d\.]+";
+
+            string commentPattern = @"[""].*[""]";
+
+            string commentPattern2 = @"\/\/.*";
+            string commentPattern3 = @"\/\*.+\*\/";
+
+            line = Regex.Replace(line, commentPattern, "");
+            line = Regex.Replace(line, commentPattern2, "");
+            line = Regex.Replace(line, commentPattern3, "");
+            // 메서드 목록
+            var methodSets = new HashSet<string>();
+
+            // 선언 타입명 추출
+            var declareMatch = Regex.Match(line, Regex.Escape(declarePattern));
+            string declareName = string.Empty;
+            if (declareMatch.Success)
+            {
+                declareName = declareMatch.Groups["Declare"]?.Value ?? string.Empty;
+
+            }
+            var methods = Regex.Matches(line, methodPattern);
+            // 현재 코드 라인에서 메서드 목록 추가
+            foreach (var met in methods)
+            {
+                var method = met as Match;
+                if (method.Success)
+                {
+                    if (ReservedList.Contains(method.Groups[1].Value))
+                    {
+                        continue;
+                    }
+                    methodSets.Add(method.Groups[1].Value);
+                }
+            }
+            //  Console.WriteLine("----");
+            var arrayNames = Regex.Matches(line, fieldArrayPattern)
+                            .Cast<Match>()
+                            .Where(m => {
+                                if (m.Value.Equals(declareName))
+                                {
+                                    return false;
+                                }
+
+                                /* 제일 앞자리가 숫자로 시작하면 넘어감 */
+                                if (Regex.IsMatch(m.Value, invalidPattern))
+                                {
+                                    return false;
+                                }
+
+                                /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
+                                if (methodSets.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+                                /* 예약어 목록에 있으면 넘어감 */
+                                if (ReservedList.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+
+                                /* 알파벳이 하나도 없으면 넘어감 */
+                                if (!m.Value.Any(c => char.IsLetter(c)))
+                                {
+                                    return false;
+                                }
+
+                                /* 대문자로 구성된 변수면 넘어감 */
+                                if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
+                                {
+                                    return false;
+                                }
+
+                                return true;
+                            })
+                            .Distinct(new MatchComparer());
+
+            var arrays = arrayNames.Select(m => m.Groups["ArrayName"].Value);
+
+            var vars = Regex.Matches(line, fieldPattern)
+                            .Cast<Match>()
+                            .Where(m => {
+                                if (m.Value.Equals(declareName))
+                                {
+                                    return false;
+                                }
+
+                                /* 제일 앞자리가 숫자로 시작하면 넘어감 */
+                                if (Regex.IsMatch(m.Value, invalidPattern))
+                                {
+                                    return false;
+                                }
+                                
+                                /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
+                                if (methodSets.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+                                /* 예약어 목록에 있으면 넘어감 */
+                                if (ReservedList.Contains(m.Value))
+                                {
+                                    return false;
+                                }
+
+                                /* 알파벳이 하나도 없으면 넘어감 */
+                                if(!m.Value.Any(c => char.IsLetter(c)))
+                                {
+                                    return false;
+                                }
+
+                                /* 대문자로 구성된 변수면 넘어감 */
+                                if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
+                                {
+                                    return false;
+                                }
+
+                                return true;
+                            })
+                            .Distinct(new MatchComparer());
+
+            foreach (var x in vars)
+            {
+                if (x.Success)
+                {
+                    methodVarList.Vars.Add(x.Groups["Field"].Value);
+                }
+            }
+
+            foreach (var x in arrays)
+            {
+                 methodVarList.Vars.Add(x);
+            }
+
+
+            foreach (var m in methodSets)
+            {
+                methodVarList.Methods.Add(m);
+            }
+            return methodVarList;
+        }
 
         /// <summary>
         /// 크리티컬 변수 목록 추출
         /// </summary>
         /// <param name="line">현재 코드줄</param>
         /// <returns></returns>
-        public IEnumerable<string> ExtractCriticalVariant(string line)
+        public IEnumerable<string> ExtractCriticalVariant(string line, bool skipDefine=true)
         {
             line = line.Trim();
             if (string.IsNullOrWhiteSpace(line))
@@ -364,18 +544,11 @@ namespace VulnCrawler
                                 {
                                     return false;
                                 }
-
-                                /* 대문자로 구성된 변수면 넘어감 */
-                                if (m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
-                                {
-                                    return false;
-                                }
                                 /* 제일 앞자리가 숫자로 시작하면 넘어감 */
                                 if (Regex.IsMatch(m.Value, invalidPattern))
                                 {
                                     return false;
                                 }
-                                
                                 /* 전 단계에서 구한 메서드 목록에 있으면 넘어감 */
                                 if (methodSets.Contains(m.Value))
                                 {
@@ -386,14 +559,16 @@ namespace VulnCrawler
                                 {
                                     return false;
                                 }
-
                                 /* 알파벳이 하나도 없으면 넘어감 */
                                 if(!m.Value.Any(c => char.IsLetter(c)))
                                 {
                                     return false;
                                 }
-
-                                
+                                /* 대문자로 구성된 변수면 넘어감 */
+                                if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
+                                {
+                                    return false;
+                                }
                                 return true;
                             })
                             .Distinct(new MatchComparer());
@@ -436,5 +611,11 @@ namespace VulnCrawler
         {
             return obj.Value.GetHashCode();
         }
+    }
+
+    public class MethodVarList
+    {
+        public IList<string> Vars { get; set; }
+        public IList<string> Methods { get; set; }
     }
 }

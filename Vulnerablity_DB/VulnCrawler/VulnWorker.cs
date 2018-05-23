@@ -41,16 +41,13 @@ namespace VulnCrawler
       
 
         private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve) {
-
             foreach (var entry in entrys) {
                 // 기존 소스코드
                 var oldOid = entry.OldOid;
-
                 try
                 {
                     Blob oldBlob = self.Repository.Lookup<Blob>(oldOid);
                     string oldContent = oldBlob.GetContentText();
-
                     // 변경된 소스코드
                     var newOid = entry.Oid;
                     Blob newBlob = self.Repository.Lookup<Blob>(newOid);
@@ -116,6 +113,7 @@ namespace VulnCrawler
                                 Console.WriteLine($"=====block({block.Num}, {block.HasCritical.ToString()})");
                                 Console.WriteLine(block.Code);
                                 Console.ResetColor();
+                                Console.WriteLine($"AbsCode = \n{block.AbsCode}");
                                 Console.WriteLine($"MD5 = {block.Hash}");
                             }
 
@@ -178,7 +176,7 @@ namespace VulnCrawler
                 catch (Exception e)
                 {
                    // Console.WriteLine(entry.Patch);
-                  //  Console.WriteLine(e.ToString());
+                 //   Console.WriteLine(e.ToString());
                  //   Console.ReadLine();
                     continue;
                 }

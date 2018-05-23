@@ -359,7 +359,6 @@ namespace VulnCrawler
                         {
                             continue;
                         }
-
                         if (!(trimLine.EndsWith("}") || trimLine.EndsWith(";")))
                         {
                             continue;
@@ -370,7 +369,6 @@ namespace VulnCrawler
                             prevStartBlock = true;
                             continue;
                         }
-
                         mainLine = true;
                     }
 
@@ -398,11 +396,7 @@ namespace VulnCrawler
                     {
                         blockList.Add(new Block { Code = mains, HasCritical = criticalBlock, Num = crNum++ });
                     }
-
-
                 }
-
-
             }
 
             bool cb = false;
@@ -458,6 +452,76 @@ namespace VulnCrawler
             }
 
             return blockList;
+        }
+
+        public override string Abstract(string blockCode, IDictionary<string, string> dict, IDictionary<string, string> methodDict)
+        {
+            var split = blockCode.Split('\n');
+            var varName = "VAL";
+            var methodName = "FUNC";
+            int varIdx = dict.Count();
+            int methodIdx = methodDict.Count();
+
+            var removes = Regex.Split(blockCode, Environment.NewLine, RegexOptions.Multiline);
+            StringBuilder builder = new StringBuilder();
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            foreach (var item in removes)
+            {
+                if (string.IsNullOrWhiteSpace(item))
+                {
+                    continue;
+                }
+                Console.Write(item);
+                builder.Append(item);
+                // Console.ReadLine();
+            }
+//            Console.WriteLine(builder.ToString());
+            Console.ResetColor();
+            foreach (var line in split)
+            {
+                var varList = ExtractMethodVariantList(line, skipDefine: false);
+                if (varList == null)
+                {
+                    continue;
+                }
+                foreach (var var in varList.Vars)
+                {
+                    if (!dict.ContainsKey(var))
+                    {
+                        dict[var] = varName + varIdx++;
+                    }
+                }
+
+                foreach (var m in varList.Methods)
+                {
+                    if (!methodDict.ContainsKey(m))
+                    {
+                        methodDict[m] = methodName + methodIdx++;
+                    }
+                }
+
+            }
+
+            var sortVarDict = dict.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
+            var sortMethodDict = methodDict.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
+
+            string temp = blockCode;
+            foreach (var pair in sortVarDict)
+            {
+                temp = Regex.Replace(temp, $@"\b{pair.Key}\b", pair.Value);
+            }
+
+            foreach (var pair in sortMethodDict)
+            {
+                temp = Regex.Replace(temp, $@"\b{pair.Key}\b", pair.Value);
+
+            }
+            temp = Regex.Replace(temp, @"\s", "", RegexOptions.Multiline);
+            temp = Regex.Replace(temp, @"{|}|;|\)|\(", "");
+            temp = temp.ToUpper();
+
+
+            return temp;
         }
     }
 }

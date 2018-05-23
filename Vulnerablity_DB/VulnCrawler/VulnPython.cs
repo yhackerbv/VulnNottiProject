@@ -75,5 +75,10 @@ namespace VulnCrawler
         {
             throw new NotImplementedException();
         }
+
+        public override string Abstract(string blockCode, IDictionary<string, string> dict, IDictionary<string, string> methodDict)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
