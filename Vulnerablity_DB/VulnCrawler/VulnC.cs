@@ -37,21 +37,27 @@ namespace VulnCrawler
             var table = new Dictionary<string, IEnumerable<string>>();
             string prevMethodName = string.Empty;
             StringBuilder builder = new StringBuilder();
+
+            var regex1 = new Regex("\n", RegexOptions.Compiled);
+            var regex2 = new Regex(@""".+""", RegexOptions.Compiled);
+            var regex3 = new Regex(@"^[+-]\s", RegexOptions.Compiled);
+            var regex4 = new Regex(@"^[+-]\s*(\*|\/\*|\*\/)", RegexOptions.Compiled);
             // 라인으로 나누고 @@가 시작하는 곳까지 생략
-            var split = Regex.Split(srcCode, "\n").SkipWhile(s => !s.StartsWith("@@")).ToArray();
+            var split = regex1.Split(srcCode).SkipWhile(s => !s.StartsWith("@@")).ToArray();
             for(int i = 0; i < split.Length; i++)
             {
                 string line = split[i].Trim();
                 // 문자열 제거
-                line = Regex.Replace(line, @""".+""", "");
+                //line = Regex.Replace(line, @""".+""", "");
+                line = regex2.Replace(line, "");
 
                 var methodMatch = extractMethodLine.Match(line);
                 string methodName = methodMatch.Groups[MethodName].Value.Trim();
                 // 추가된, 제거된 라인인지 확인
-                if (Regex.IsMatch(line, @"^[+-]\s"))
+                if (regex3.IsMatch(line))
                 {
                     // 주석문인지 확인
-                    if (Regex.IsMatch(line, @"^[+-]\s*(\*|\/\*|\*\/)"))
+                    if (regex4.IsMatch(line))
                     {
                         continue;
                     }
@@ -111,20 +117,32 @@ namespace VulnCrawler
                 string commentPattern = @"\/\*.+\*\/";
                 string commentPattern2 = @"\/\*";
                 string commentPattern3 = @"\*\/";
+                var regex1 = new Regex(commentPattern3, RegexOptions.Compiled);
+                var regex2 = new Regex(stringPattern, RegexOptions.Compiled);
+                var regex3 = new Regex(commentPattern2, RegexOptions.Compiled);
+                var regex4 = new Regex(commentPattern, RegexOptions.Compiled);
+                var regex5 = new Regex($"{method}", RegexOptions.Compiled);
+                var regex6 = new Regex($@"""[.]*({method})", RegexOptions.Compiled);
+                var regex7 = new Regex($@"{method}\s*" + @"\{", RegexOptions.Compiled);
                 while (!reader.EndOfStream) {
                     string line = reader.ReadLine();
                     // 메서드를 찾은 경우
+
                     if (found)
                     {
                         string trim = line.Trim();
                         // 범위 주석 진행되고 있으면 넘어감
+                        if (trim.StartsWith("#"))
+                        {
+                            continue;
+                        }
                         if (commentLine)
                         {
                             // 혹시 범위 주석이 끝났는지 체크
-                            if (Regex.IsMatch(trim, commentPattern3))
+                            if (regex1.IsMatch(trim))
                             {
                                 commentLine = false;
-                                trim = Regex.Split(trim, commentPattern3)[1];
+                                trim = regex1.Split(trim)[1];
                             }
                             else
                             {
@@ -132,13 +150,12 @@ namespace VulnCrawler
                             }
                         }
                         // "" 문자열 제거
-                        string removeString = Regex.Replace(trim, stringPattern, "");
+                        string removeString = regex2.Replace(trim, "");
                         // /* ~ 패턴
-                        if (Regex.IsMatch(trim, commentPattern2))
+                        if (regex3.IsMatch(trim))
                         {
-                            
                             // /* ~ */ 패턴이 아닌 경우
-                            if (!Regex.IsMatch(trim, commentPattern))
+                            if (!regex4.IsMatch(trim))
                             {
                                 commentLine = true;
                             }
@@ -187,7 +204,7 @@ namespace VulnCrawler
                     else
                     {
                         // 메서드 찾았는지 확인
-                        if (Regex.Match(line, $"{method}").Success)
+                        if (regex5.Match(line).Success)
                         {
                             string trim = line.Trim();
                             // 주석으로 시작했다면 넘어감
@@ -202,12 +219,12 @@ namespace VulnCrawler
                             }
                             
                             // 혹시 메서드가 문자열 사이에 있다면 넘어감..
-                            if (Regex.Match(trim, $@"""[.]*({method})").Success)
+                            if (regex6.Match(trim).Success)
                             {
                                 continue;
                             }
                             // 만약 찾은 메서드 라인에서 중괄호 {가 시작된 경우
-                            if (Regex.Match(trim, $@"{method}\s*" + @"\{").Success)
+                            if (regex7.Match(trim).Success)
                             {
                                 // 동시에 } 닫히기까지 한 경우 드물겠지만..
                                 if (trim.EndsWith("}"))
@@ -459,8 +476,20 @@ namespace VulnCrawler
             var split = blockCode.Split('\n');
             var varName = "VAL";
             var methodName = "FUNC";
+            var d = new Dictionary<string, string>();
+            
+
             int varIdx = dict.Count();
             int methodIdx = methodDict.Count();
+
+            var dict2 = new Dictionary<string, string>();
+            var methodDict2 = new Dictionary<string, string>();
+            int varIdx2 = 0;
+            int methodIdx2 = 0;
+
+
+            //var regex1 = new Regex(@"\s*$|^\s*", RegexOptions.Compiled);
+            var regex1 = new Regex(@"\s*$", RegexOptions.Compiled);
 
             var removes = Regex.Split(blockCode, Environment.NewLine, RegexOptions.Multiline);
             StringBuilder builder = new StringBuilder();
@@ -471,51 +500,100 @@ namespace VulnCrawler
                 {
                     continue;
                 }
-                Console.Write(item);
-                builder.Append(item);
-                // Console.ReadLine();
+                string rm = regex1.Replace(item, "");
+                builder.Append(rm);
             }
-//            Console.WriteLine(builder.ToString());
+            Console.WriteLine(builder.ToString());
             Console.ResetColor();
-            foreach (var line in split)
+            string line = builder.ToString();
+
+            var varList = ExtractMethodVariantList(line, skipDefine: false);
+            if (varList == null)
             {
-                var varList = ExtractMethodVariantList(line, skipDefine: false);
-                if (varList == null)
+                return string.Empty;
+            }
+            foreach (var var in varList.Vars)
+            {
+                if (!dict.ContainsKey(var))
                 {
-                    continue;
-                }
-                foreach (var var in varList.Vars)
-                {
-                    if (!dict.ContainsKey(var))
-                    {
-                        dict[var] = varName + varIdx++;
-                    }
+                    dict[var] = varName + varIdx++;
                 }
 
-                foreach (var m in varList.Methods)
+                if (!dict2.ContainsKey(var))
                 {
-                    if (!methodDict.ContainsKey(m))
-                    {
-                        methodDict[m] = methodName + methodIdx++;
-                    }
+                    dict2[var] = varName + varIdx2++;
                 }
+
 
             }
 
-            var sortVarDict = dict.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
-            var sortMethodDict = methodDict.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
+            foreach (var m in varList.Methods)
+            {
+                if (!methodDict.ContainsKey(m))
+                {
+                    methodDict[m] = methodName + methodIdx++;
+                }
+                if (!methodDict2.ContainsKey(m))
+                {
+                    methodDict2[m] = methodName + methodIdx2++;
+                }
+            }
+
+            //var sortVarDict = dict.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
+            //var sortMethodDict = methodDict.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
+
+            var sortVarDict2 = dict2.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
+            var sortMethodDict2 = methodDict2.OrderByDescending(p => p.Key).ToDictionary(p => p.Key, p => p.Value);
 
             string temp = blockCode;
-            foreach (var pair in sortVarDict)
+            foreach (var pair in sortVarDict2)
+            {
+                string pk = pair.Key;
+                string pv = pair.Value;
+
+                if (pk.Contains("->"))
+                {
+                    var connects = Regex.Split(pk, "->");
+                    var connectList = new List<string>();
+
+                    string result = string.Empty;
+                    string s = string.Empty;
+                    foreach (var c in connects)
+                    {
+                        if (s == string.Empty)
+                        {
+                            s = c;
+                            continue;
+                        }
+
+                        if (sortVarDict2.ContainsKey(s))
+                        {
+                            if (result == string.Empty)
+                            {
+                                result = sortVarDict2[s];
+                            }
+                            else
+                            {
+                                result = string.Join("->", result, sortVarDict2[s]);
+                            }
+                        }
+                        s = string.Join("->", s, c);
+                    }
+                    if (result != string.Empty)
+                    {
+                        result = string.Join("->", result, pv);
+                        pv = result;
+                    }
+
+                }
+
+                temp = Regex.Replace(temp, $@"\b{pk}\b", pv);
+            }
+            foreach (var pair in sortMethodDict2)
             {
                 temp = Regex.Replace(temp, $@"\b{pair.Key}\b", pair.Value);
             }
 
-            foreach (var pair in sortMethodDict)
-            {
-                temp = Regex.Replace(temp, $@"\b{pair.Key}\b", pair.Value);
-
-            }
             temp = Regex.Replace(temp, @"\s", "", RegexOptions.Multiline);
             temp = Regex.Replace(temp, @"{|}|;|\)|\(", "");
             temp = temp.ToUpper();

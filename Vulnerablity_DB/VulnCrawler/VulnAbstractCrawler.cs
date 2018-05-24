@@ -336,7 +336,7 @@ namespace VulnCrawler
             // 메서드 정규식 패턴
             string methodPattern = @"([a-zA-Z0-9_\.]+)\s*\(";
             // 변수 정규식 패턴
-            string fieldPattern = @"\*?(?<Field>[a-zA-Z0-9_\.\[\]\-\>]+)";
+            string fieldPattern = @"\*?(?<Field>([a-zA-Z0-9_\.]|\-\>)+)";
             string fieldArrayPattern = @"(?<ArrayName>[a-zA-Z0-9_\.]+)\[.+\]";
             string invalidPattern = @"^[\d\.]+";
 
@@ -441,7 +441,10 @@ namespace VulnCrawler
                                 {
                                     return false;
                                 }
-
+                                if (m.Value.StartsWith("-"))
+                                {
+                                    return false;
+                                }
                                 /* 알파벳이 하나도 없으면 넘어감 */
                                 if(!m.Value.Any(c => char.IsLetter(c)))
                                 {
@@ -458,20 +461,53 @@ namespace VulnCrawler
                             })
                             .Distinct(new MatchComparer());
 
+     
             foreach (var x in vars)
             {
                 if (x.Success)
                 {
-                    methodVarList.Vars.Add(x.Groups["Field"].Value);
+                    var field = x.Groups["Field"].Value;
+
+                    /* a->b 포인터 변수 나눠서 추가 */
+                    if (field.Contains("->"))
+                    {
+                        var connects = Regex.Split(field, "->");
+                        var connectList = new List<string>();
+
+                        string s = string.Empty;
+                        foreach (var c in connects)
+                        {
+                            if (s == string.Empty)
+                            {
+                                s = c;
+                            }
+                            else
+                            {
+                                s = string.Join("->", s, c);
+                            }
+                            connectList.Add(s);
+                        }
+                        foreach (var c in connectList)
+                        {
+                            if (c == connects[connects.Length-1])
+                            {
+                                continue;
+                            }
+                            if (methodVarList.Vars.Contains(c))
+                            {
+                                continue;
+                            }
+                            methodVarList.Vars.Add(c);
+                        }
+                        continue;
+                    }
+                    methodVarList.Vars.Add(field);
                 }
             }
-
             foreach (var x in arrays)
             {
                  methodVarList.Vars.Add(x);
             }
-
-
             foreach (var m in methodSets)
             {
                 methodVarList.Methods.Add(m);
@@ -499,8 +535,7 @@ namespace VulnCrawler
             // 메서드 정규식 패턴
             string methodPattern = @"([a-zA-Z0-9_\.]+)\s*\(";
             // 변수 정규식 패턴
-            string fieldPattern = @"^*?[a-zA-Z0-9_\.\[\]\-\>]+";
-            
+            string fieldPattern = @"\*?(?<Field>([a-zA-Z0-9_\.]|\-\>)+)";
             string invalidPattern = @"^[\d\.]+";
 
             string commentPattern = @"[""].*[""]";
