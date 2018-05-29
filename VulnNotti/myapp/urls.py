@@ -3,7 +3,7 @@ from myapp.views import *
 
 
 urlpatterns = [
-    url(r'^$', MypageView.as_view(), name='mypage'),
-    url(r'^table', TableView.as_view(), name='table'),
+    url(r'^static/', StaticView.as_view(), name='static'),
+    url(r'^dynamic/', DynamicView.as_view(), name='dynamic'),
 
 ]

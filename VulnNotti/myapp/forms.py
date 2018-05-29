@@ -1,4 +1,7 @@
 from django import forms
+from .models import UploadFileModel
 
-class testform(forms.Form):
-    text = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':80}))
+class UploadFileForm(forms.ModelForm):
+    class Meta:
+        model = UploadFileModel
+        fields = ('title', 'file')
