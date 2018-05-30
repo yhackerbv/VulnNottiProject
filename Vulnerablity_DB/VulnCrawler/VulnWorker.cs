@@ -146,7 +146,7 @@ namespace VulnCrawler
                                 };
                                 Console.WriteLine($"Vuln FuncName:{vuln.FuncName}");
                                 /* VulnDB에 추가 */
-                                //VulnRDS.InsertVulnData(vuln);
+                                VulnRDS.InsertVulnData(vuln);
                             }
                         }
                     }
