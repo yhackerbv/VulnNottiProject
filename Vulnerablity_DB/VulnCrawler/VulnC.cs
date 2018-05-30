@@ -10,14 +10,27 @@ namespace VulnCrawler
 {
     public class VulnC : VulnAbstractCrawler
     {
-//        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)?( const )? [\w]+ [\w]+\([\w \*\,\t\n]*[\)\,])";
+        //        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)?( const )? [\w]+ [\w]+\([\w \*\,\t\n]*[\)\,])";
+        /* 함수 패턴 정규식  */
         protected override string RegexFuncPattern => $@"(?<{MethodName}>(unsigned|static)?( const )? [\w]+ [\w]+\(([\w \*\,\t\n])*[\)\,])";
+        /* 검색 파일 타입 */
         protected override string Extension => ".c";
+        /* 예약어 파일명 */
         protected override string ReservedFileName => "CReserved.txt";
+        /// <summary>
+        /// 패치 코드에서 함수 목록 뽑는 정규식
+        /// </summary>
+        /// <param name="patchCode">패치 코드</param>
+        /// <returns></returns>
         public override MatchCollection GetMatches(string patchCode) {
             var regs = Regex.Matches(patchCode, RegexFuncPattern);
             return regs;
         }
+        /// <summary>
+        /// 주석 제거 함수 (안쓰임)
+        /// </summary>
+        /// <param name="original"></param>
+        /// <returns></returns>
         public override string RemoveComment(string original) {
             string txt = Regex.Replace(original, Environment.NewLine, "");
 
@@ -32,6 +45,11 @@ namespace VulnCrawler
             return replace;
         }
 
+        /// <summary>
+        /// 패치 정보에서 크리티컬 메서드 테이블 구함
+        /// </summary>
+        /// <param name="srcCode">원본 소스 코드</param>
+        /// <returns>키 = 크리티컬 메서드명, 값 = 크리티컬 변수 목록</returns>
         public override IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode)
         {
             var table = new Dictionary<string, IEnumerable<string>>();
@@ -105,6 +123,12 @@ namespace VulnCrawler
             }
             return table;
         }
+        /// <summary>
+        /// 원본 함수 코드 구해주는 함수
+        /// </summary>
+        /// <param name="oldStream">원본 코드 파일</param>
+        /// <param name="methodName">찾을 메서드 이름</param>
+        /// <returns></returns>
         protected override string GetOriginalFunc(Stream oldStream, string methodName) {
             StringBuilder oldBuilder = new StringBuilder();
             string method = Regex.Escape(methodName);
@@ -244,6 +268,12 @@ namespace VulnCrawler
             return oldBuilder.ToString();
         }
 
+        /// <summary>
+        /// 크리티컬 블록 리스트 구하는 함수
+        /// </summary>
+        /// <param name="srcCode">원본 함수 코드</param>
+        /// <param name="criticalList">크리티컬 변수 목록</param>
+        /// <returns></returns>
         protected override IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList)
         {
             
@@ -471,6 +501,13 @@ namespace VulnCrawler
             return blockList;
         }
 
+        /// <summary>
+        /// 추상화 정규화 함수
+        /// </summary>
+        /// <param name="blockCode">블록 소스 코드</param>
+        /// <param name="dict">추상화 변환 변수 테이블</param>
+        /// <param name="methodDict">추상화 변환 메서드 테이블</param>
+        /// <returns></returns>
         public override string Abstract(string blockCode, IDictionary<string, string> dict, IDictionary<string, string> methodDict)
         {
             var split = blockCode.Split('\n');

@@ -27,6 +27,8 @@ namespace VulnCrawler
             //AWS.account.Endpoint = "vulndb.cby38wfppa7l.us-east-2.rds.amazonaws.com";
             //AWS.SaveAccount();
             //AES aes = new AES();
+
+            /* AWS 계정 정보 파일 읽음 */
             string txt = File.ReadAllText(@"Account.xml");
             // string xml = aes.AESDecrypt128(txt, key);
             string xml = txt;
@@ -34,15 +36,19 @@ namespace VulnCrawler
             AWS.LoadAccount(xml);
             AWS.Account account = AWS.account;
            
+            /* AWS 정보 출력 */
             Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
             try
             {
+                /* DB 접속 시도 */
                 VulnRDS.Connect(account, "vuln");
             }
             catch(Exception e)
             {
                 Console.WriteLine($"접속 에러 :: {e.ToString()}");
             }
+
+            /* AWS 연결 여부 확인 */
             if (VulnRDS.Conn.State == System.Data.ConnectionState.Open)
             {
                 Console.WriteLine("접속 성공");
@@ -53,44 +59,18 @@ namespace VulnCrawler
                 Console.WriteLine("연결 실패");
                 return;
             }
-            //MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
-            //    Server = "",
-            //    UserID = id,
-            //    Password = pw,
-            //    Database = "vuln",
-            //    Port = 3306
-            //};
-
-            //string strConn = builder.ToString();
-            //builder = null;
-            //MySqlConnection conn = new MySqlConnection(strConn);
-
-            //try {
-
-            //    String sql = "INSERT INTO members (id, pwd, name) " +
-            //                    "VALUES ('gon', '111', '김삿갓')";
-
-            //    MySqlCommand cmd = new MySqlCommand(sql, conn);
-
-            //    conn.Open();
-
-            //    cmd.ExecuteNonQuery();
-            //    conn.Close();
-            //} catch (Exception e) {
-            //    Console.WriteLine(e.ToString());
-            //}
             #endregion
 
             Run();
 
         }
+
+        /* 메인 동작 함수 */
         public static void Run() {
             // Repository 폴더들이 있는 주소를 지정하면 하위 폴더 목록을 가져옴(Repository 목록)
             Regex.CacheSize = 50;
 
-            // var fields = VulnWorker.GetCriticalVariant(@"return _is_safe_url(url, host) and _is_safe_url(url.replace('\\', '/'), host)");
-          
-           // return;
+            /* C:\VulnC에 있는 Git Repository들로 돌아감 */
             var directorys = Directory.GetDirectories(@"c:\VulnC");
             if (directorys.Length == 0) {
                 Console.WriteLine("Repository 목록 찾기 실패");
@@ -98,16 +78,15 @@ namespace VulnCrawler
             }
             // Repository 목록 만큼 반복함.
             foreach (var directory in directorys) {
-                // 템플릿 패턴화 T : VulnAbstractCrawler
-                if (directory.Contains("open"))
+                /* 폴더 중에 linux가 있으면 잠깐 넘어감 (너무 커서 테스트 힘듦) */
+                if (directory.Contains("linux"))
                 {
                     continue;
                 }
-                Console.WriteLine(directory);
+                // 템플릿 패턴화 T : VulnAbstractCrawler
                 VulnWorker.Run<VulnC>(directory);
             }
         }
-
         #region Secure string input
         static String SecureStringToString(SecureString value) {
             IntPtr valuePtr = IntPtr.Zero;
