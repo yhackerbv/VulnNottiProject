@@ -9,6 +9,8 @@ namespace VulnCrawler
 {
     public static class VulnRDS
     {
+        public static AWS.Account Account { get; set; }
+        public static string DbName { get; set; }
         public static MySqlConnection Conn { get; set; }
         public class Vuln
         {
@@ -97,6 +99,8 @@ namespace VulnCrawler
             builder = null;
             Conn = new MySqlConnection(strConn);
             Conn.Open();
+            Account = account;
+            DbName = dbName;
         }
         public static void InsertVulnData(Vuln vuln)
         {
@@ -132,6 +136,8 @@ namespace VulnCrawler
                 last_vulnId = 1;
             }
  
+            Retry:
+
             //DB insert
             try
             {
@@ -147,6 +153,12 @@ namespace VulnCrawler
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
                 Console.ReadLine();
             }
             // }
