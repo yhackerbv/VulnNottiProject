@@ -26,39 +26,8 @@ namespace VulnCrawler
             public string CodeAbsAfter { get; set; } = "NULL"; /* 취약점 패치 후 추상화 코드 */
             public string BlockHash { get; set; } = "NULL";/* 취약점 블록 해시 값 */
             public int BlockNum { get; set; } = -1; /* 블록 번호 */
-            // 생성자
-            public Vuln()
-            {
-            }
-            public Vuln(int _lenBlock, string _repositName, string _cve, string _funcName, string _language, string _codeOriBefore, string _codeOriAfter, string _codeAbsBefore, string _codeAbsAfter, string _blockHash)
-            {
-                //임의의 VulnId 
-                VulnId = -1;
-                LenBlock = _lenBlock;
-                RepositName = _repositName;
-                Cve = _cve;
-                FuncName = _funcName;
-                Language = _language;
-                CodeOriBefore = _codeOriBefore;
-                CodeOriAfter = _codeOriAfter;
-                CodeAbsBefore = _codeAbsBefore;
-                CodeAbsAfter = _codeAbsAfter;
-                BlockHash = _blockHash;
-            }
-            public Vuln(int _vulnId, int _lenBlock, string _repositName, string _cve, string _funcName, string _language, string _codeOriBefore, string _codeOriAfter, string _codeAbsBefore, string _codeAbsAfter, string _blockHash)
-            {
-                VulnId = _vulnId;
-                LenBlock = _lenBlock;
-                RepositName = _repositName;
-                Cve = _cve;
-                FuncName = _funcName;
-                Language = _language;
-                CodeOriBefore = _codeOriBefore;
-                CodeOriAfter = _codeOriAfter;
-                CodeAbsBefore = _codeAbsBefore;
-                CodeAbsAfter = _codeAbsAfter;
-                BlockHash = _blockHash;
-            }
+
+
         }
         public class User
         {
@@ -69,20 +38,7 @@ namespace VulnCrawler
             public string CodeOriAfter { get; set; } /* 취약점 패치 후 원본 코드 */
             public string FuncName { get; set; } /* 취약점 함수 이름 */
             public string DetectDate { get; set; } /* 검사 날짜 */
-            // 생성자
-            public User()
-            {
-            }
-            public User(int _UserId, string _RepositName, string _Cve, string _CodeOriBefore, string _CodeOriAfter, string _FuncName, string _DetectDate)
-            {
-                UserId = _UserId;
-                RepositName = _RepositName;
-                Cve = _Cve;
-                CodeOriBefore = _CodeOriBefore;
-                CodeOriAfter = _CodeOriAfter;
-                FuncName = _FuncName;
-                DetectDate = _DetectDate;
-            }
+
         }
         //connect
         public static void Connect(AWS.Account account, string dbName)
