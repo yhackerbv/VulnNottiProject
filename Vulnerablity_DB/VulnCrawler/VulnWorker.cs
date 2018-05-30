@@ -2,6 +2,7 @@
 using LibGit2Sharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,7 +18,6 @@ namespace VulnCrawler
             var crawler = new T();
             crawler.Init(dirPath);
             var commits = crawler.Commits;
-            Console.WriteLine(commits.Count());
             foreach (var commit in commits) {
                 // 커밋 메시지
                 string message = commit.Message;
@@ -31,16 +31,19 @@ namespace VulnCrawler
                     // 패치 엔트리 파일 배열 중에 파일 확장자가 .py인 것만 가져옴
                     // (실질적인 코드 변경 커밋만 보기 위해서)
                     var entrys = crawler.GetPatchEntryChanges(patch);
+
+                    var dsp = dirPath.Split(Path.DirectorySeparatorChar);
+                    string repoName = dsp[dsp.Length - 1];
                     // 현재 커밋에 대한 패치 엔트리 배열을 출력함
-                    PrintPatchEntrys(entrys, crawler, message, cve);
+                    PrintPatchEntrys(entrys, crawler, message, cve, repoName);
                 }
-                Console.ReadLine();
+               // Console.ReadLine();
 
             }
         }
       
 
-        private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve) {
+        private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve, string repoName) {
             foreach (var entry in entrys) {
                 // 기존 소스코드
                 var oldOid = entry.OldOid;
@@ -60,6 +63,11 @@ namespace VulnCrawler
                     // 출력
                     if (regs.Count > 0)
                     {
+                        int deleted = entry.LinesDeleted;
+                        if (deleted == 0)
+                        {
+                            continue;
+                        }
                         Console.BackgroundColor = ConsoleColor.DarkBlue;
                         Console.WriteLine($"Old Content: \n{oldContent}");
                         Console.ResetColor();
@@ -89,19 +97,12 @@ namespace VulnCrawler
                         var table = self.ExtractGitCriticalMethodTable(entry.Patch);
                         foreach (var tuple in self.Process(oldBlob, table))
                         {
-                            (var methodName, var blocks) = tuple;
+                            (var methodName, var oriFunc, var blocks) = tuple;
                             Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine($"메서드 이름 : {methodName}");
                             Console.ResetColor();
-                            //Console.ForegroundColor = ConsoleColor.Blue;
-                            //foreach (var c in )
-                            //{
-                            //    Console.WriteLine(c);
-                            //}
-                            //Console.ResetColor();
                             foreach (var block in blocks)
                             {
-
                                 if (block.HasCritical)
                                 {
                                     Console.BackgroundColor = ConsoleColor.DarkMagenta;
@@ -115,6 +116,37 @@ namespace VulnCrawler
                                 Console.ResetColor();
                                 Console.WriteLine($"AbsCode = \n{block.AbsCode}");
                                 Console.WriteLine($"MD5 = {block.Hash}");
+
+                                if (!block.HasCritical)
+                                {
+                                   // Console.WriteLine("크리티컬 아님");
+                                    continue;
+                                }
+
+                                byte[] funcNameBytes = Encoding.Unicode.GetBytes(methodName);
+                                byte[] codeOriBeforeBytes = Encoding.Unicode.GetBytes(oriFunc);
+                                byte[] codeAbsBeforeBytes = Encoding.Unicode.GetBytes(block.AbsCode);
+
+                                VulnRDS.Vuln vuln = new VulnRDS.Vuln()
+                                {
+                                    Cve = cve,
+                                    Language = "C",
+                                    BlockHash = block.Hash,
+                                    LenBlock = block.Code.Length,
+                                    FuncName = Convert.ToBase64String(funcNameBytes),
+                                    RepositName = repoName,
+                                    CodeOriBefore = Convert.ToBase64String(codeOriBeforeBytes),
+                                    CodeAbsBefore = Convert.ToBase64String(codeAbsBeforeBytes),
+                                    BlockNum = block.Num,
+                                    
+                                };
+                              //  Console.WriteLine("추가중...");
+                                VulnRDS.InsertVulnData(vuln);
+
+                             //   Console.WriteLine($"추가: {vuln.Cve}, {vuln.FuncName}, {vuln.RepositName}");
+                              //  Console.ReadLine();
+
+
                             }
 
                         }
@@ -145,18 +177,18 @@ namespace VulnCrawler
 
                     //foreach (var reg in regs)
                     //{
-                        
+
                     //    var match = reg as Match;
                     //    string methodName = match.Groups[VulnAbstractCrawler.MethodName].Value.Trim();
                     //    string originalFunc, md5;
                     //    (originalFunc, md5) = self.Process(oldBlob.GetContentStream(),
                     //        methodName);
 
-                        
+
 
                     //    #region 현재 패치 엔트리 정보 출력(추가된 줄 수, 삭제된 줄 수, 패치 이전 경로, 패치 후 경로)
 
-                        
+
                     //    // 패치 전 원본 함수
                     //    Console.WriteLine($"Original Func: {originalFunc}");
                     //    // 해쉬 후

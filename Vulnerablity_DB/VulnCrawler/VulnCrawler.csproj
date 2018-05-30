@@ -60,6 +60,7 @@
     <Compile Include="VulnAbstractCrawler.cs" />
     <Compile Include="VulnC.cs" />
     <Compile Include="VulnPython.cs" />
+    <Compile Include="VulnRDS.cs" />
     <Compile Include="VulnWorker.cs" />
   </ItemGroup>
   <ItemGroup>

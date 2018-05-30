@@ -22,17 +22,37 @@ namespace VulnCrawler
             //SecureString s_key = GetConsoleSecurePassword();
             //Console.Clear();
             //string key = SecureStringToString(s_key);
-            ////AWS.SaveAccount();
+            //AWS.account.Id = "yhackerbv";
+            //AWS.account.Pw = "guswhd12";
+            //AWS.account.Endpoint = "vulndb.cby38wfppa7l.us-east-2.rds.amazonaws.com";
+            //AWS.SaveAccount();
             //AES aes = new AES();
-            //string txt = File.ReadAllText(@"Account.xml");
-            //string xml = aes.AESDecrypt128(txt, key);
+            string txt = File.ReadAllText(@"Account.xml");
+            // string xml = aes.AESDecrypt128(txt, key);
+            string xml = txt;
 
-            //AWS.LoadAccount(xml);
-
-            //AWS.Account account = AWS.account;
-
-            //Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
-
+            AWS.LoadAccount(xml);
+            AWS.Account account = AWS.account;
+           
+            Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
+            try
+            {
+                VulnRDS.Connect(account, "vuln");
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine($"접속 에러 :: {e.ToString()}");
+            }
+            if (VulnRDS.Conn.State == System.Data.ConnectionState.Open)
+            {
+                Console.WriteLine("접속 성공");
+                
+            }
+            else
+            {
+                Console.WriteLine("연결 실패");
+                return;
+            }
             //MySqlConnectionStringBuilder builder = new MySqlConnectionStringBuilder {
             //    Server = "",
             //    UserID = id,
@@ -69,12 +89,7 @@ namespace VulnCrawler
             Regex.CacheSize = 50;
 
             // var fields = VulnWorker.GetCriticalVariant(@"return _is_safe_url(url, host) and _is_safe_url(url.replace('\\', '/'), host)");
-            var c = new VulnC();
-            var fields = c.ExtractCriticalVariant(@"if (s->session->peer != s->session->sess_cert->peer_key->x509)");
-            foreach (var item in fields)
-            {
-                Console.WriteLine(item);
-            }
+          
            // return;
             var directorys = Directory.GetDirectories(@"c:\VulnC");
             if (directorys.Length == 0) {
@@ -84,10 +99,11 @@ namespace VulnCrawler
             // Repository 목록 만큼 반복함.
             foreach (var directory in directorys) {
                 // 템플릿 패턴화 T : VulnAbstractCrawler
-                if (directory.Contains("linux"))
+                if (directory.Contains("open"))
                 {
                     continue;
                 }
+                Console.WriteLine(directory);
                 VulnWorker.Run<VulnC>(directory);
             }
         }

@@ -77,9 +77,12 @@ namespace VulnCrawler
 
         public void Init(string path) {
             Console.WriteLine("로딩중");
+            Console.WriteLine(path);
             Repository = new Repository(path);
+           
             Console.WriteLine("로딩 완료");
             Commits = SearchCommits();
+            Console.WriteLine($"Commits Count: {Commits.Count()}");
         }
         /// <summary>
         /// 레파지토리
@@ -227,7 +230,7 @@ namespace VulnCrawler
         /// <param name="oldBlob">패치 전 파일 Blob</param>
         /// <param name="table">크리티컬 메서드 테이블(Key: 메서드 이름, Value: 변수 리스트)</param>
         /// <returns></returns>
-        public virtual IEnumerable<(string methodName, IList<Block> blocks)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
+        public virtual IEnumerable<(string methodName, string oriFunc, IList<Block> blocks)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
             foreach (var item in table)
             {
                 var methodTable = new Dictionary<string, string>();
@@ -238,7 +241,7 @@ namespace VulnCrawler
                 Stream oldStream = oldBlob.GetContentStream();
                 // 패치 전 원본 함수 구하고
                 string func = GetOriginalFunc(oldStream, methodName);
-                Console.WriteLine(func);
+                
                 string bs = string.Empty;
                 string md5 = string.Empty;
                 if (item.Value.Count() != 0)
@@ -261,24 +264,17 @@ namespace VulnCrawler
                     {
                         
                         block.CriticalList = item.Value;
+                        /* 추상화 및 정규화 */
                         block.AbsCode = Abstract(block.Code, varTable, methodTable);
                         block.Hash = MD5HashFunc(block.AbsCode);
 
                     }
-
-                    /* 추상화 및 정규화 */
-                    foreach (var block in blocks)
-                    {
-                        string code = block.Code;
-
-                    }
-
-
+                    /* 추상화 변환 테이블 출력 */
                     foreach (var var in varTable)
                     {
                         Console.WriteLine($"{var.Key}, {var.Value}");
                     }
-                    yield return (methodName, blocks);
+                    yield return (methodName, func, blocks);
                 }
                 
             }

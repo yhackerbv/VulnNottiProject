@@ -24,8 +24,8 @@ namespace VulnCrawler
         }
         public static Account account { get; private set; }
         static AWS() {
-           // account = LoadAccount();
-          
+            // account = LoadAccount();
+            account = new Account();
         }
         private static Account LoadAccount() {
             if (!File.Exists(Account.FilePath)) {
