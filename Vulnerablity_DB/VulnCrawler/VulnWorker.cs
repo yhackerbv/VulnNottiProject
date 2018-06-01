@@ -134,19 +134,16 @@ namespace VulnCrawler
                                 VulnRDS.Vuln vuln = new VulnRDS.Vuln()
                                 {
                                     Cve = cve,
-                                    Language = "C",
                                     BlockHash = block.Hash,
                                     LenBlock = block.Code.Length,
                                     FuncName = Convert.ToBase64String(funcNameBytes),
-                                    RepositName = repoName,
                                     CodeOriBefore = Convert.ToBase64String(codeOriBeforeBytes),
                                     CodeAbsBefore = Convert.ToBase64String(codeAbsBeforeBytes),
-                                    BlockNum = block.Num,
-                                    
+                                    NumBlock = block.Num,
                                 };
                                 Console.WriteLine($"Vuln FuncName:{vuln.FuncName}");
                                 /* VulnDB에 추가 */
-                                //VulnRDS.InsertVulnData(vuln);
+                                VulnRDS.InsertVulnData(vuln);
                             }
                         }
                     }
