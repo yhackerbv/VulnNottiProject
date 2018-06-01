@@ -86,7 +86,7 @@ namespace VulnCrawler
             //DB insert
             try
             {
-                sql = "INSERT INTO vulnInfo(vulnId, lenBlock, repositName, cve, funcName, numBlock, codeOriBefore, codeOriAfter, codeAbsBefore, codeAbsAfter, blockHash) " +
+                sql = "INSERT INTO vulnInfo(vulnId, lenBlock, cve, funcName, numBlock, codeOriBefore, codeOriAfter, codeAbsBefore, codeAbsAfter, blockHash) " +
                        $"VALUES({last_vulnId}, {vuln.LenBlock}, '{vuln.Cve}', '{vuln.FuncName}', {vuln.NumBlock}, '{vuln.CodeOriBefore}', '{vuln.CodeOriAfter}', '{vuln.CodeAbsBefore}', '{vuln.CodeAbsAfter}', '{vuln.BlockHash}')";
                 Console.WriteLine(sql);
                 cmd = new MySqlCommand(sql, Conn);
@@ -147,12 +147,11 @@ namespace VulnCrawler
                 Console.WriteLine(e.StackTrace);
             }
         }
-        public static Vuln SearchVulnCve(string _cve)
+        public static Vuln SearchVulnCve(int _vulnId)
         {
             Vuln vuln = new Vuln();
-            Conn.Open();
             //특정 cve 가 있는지 검사
-            String sql = "select * from vulnInfo where cve like '" + _cve + "'";
+            String sql = "select * from vulnInfo where cve like '" + _vulnId + "'";
             MySqlCommand cmd = new MySqlCommand(sql, Conn);
             MySqlDataReader rdr = cmd.ExecuteReader();
             while (rdr.Read())
@@ -168,19 +167,29 @@ namespace VulnCrawler
                 vuln.CodeAbsAfter = Convert.ToString(rdr["codeAbsAfter"]);
                 vuln.BlockHash = Convert.ToString(rdr["blockHash"]);
             }
-            Conn.Close();
             return vuln;
         }
-        public static int ReturnUserLastId()
-        {
-            Conn.Open();
-            String sql = "select max(userId) from userInfo";
-            MySqlCommand cmd = new MySqlCommand(sql, Conn);
-            int last_userId = (Convert.ToInt32(cmd.ExecuteScalar())) + 1;
-            Conn.Close();
-            return last_userId;
-        }
 
+        public static bool CheckVulnData(int _vulnId)
+        {
+            string sql = "select count(*) from vulnInfo where vulnId like '" + _vulnId+ "'";
+            MySqlCommand cmd = new MySqlCommand(sql, Conn);
+            int RecordCount = Convert.ToInt32(cmd.ExecuteScalar());
+            if (RecordCount > 0)
+                return true;
+            else
+                return false;
+        }
+        public static bool CheckUserData(int _userId)
+        {
+            string sql = "select count(*) from userInfo where vulnId like '" + _userId + "'";
+            MySqlCommand cmd = new MySqlCommand(sql, Conn);
+            int RecordCount = Convert.ToInt32(cmd.ExecuteScalar());
+            if (RecordCount > 0)
+                return true;
+            else
+                return false;
+        }
         //public static IEnumerable<string> SearchVulnData(int _len)
         //{
         //
