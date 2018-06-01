@@ -146,8 +146,8 @@ namespace VulnCrawler
                 //sql = "INSERT INTO vulnInfo (vulnId, lenBlock, repositName, cve, funcName, codeOriBefore, codeOriAfter, codeAbsBefore, codeAbsAfter, blockHash) " +
                 //       "VALUES(" + last_vulnId + ", " + vuln.LenBlock + ", " + vuln.RepositName + ", " + vuln.Cve + ", " + vuln.FuncName + ", " + vuln.CodeOriBefore + ", " + vuln.CodeOriAfter + ", " + vuln.CodeAbsBefore + ", " + vuln.CodeAbsAfter + ", '" + vuln.BlockHash + "')";
                 Console.WriteLine(sql);
-                cmd = new MySqlCommand(sql, Conn);
-                cmd.ExecuteNonQuery();
+               // cmd = new MySqlCommand(sql, Conn);
+               // cmd.ExecuteNonQuery();
                 //Conn.Close();
             }
             catch (Exception e)

@@ -38,7 +38,7 @@ namespace VulnCrawler
                     string repoName = dsp[dsp.Length - 1];
                     // 현재 커밋에 대한 패치 엔트리 배열을 출력함
                     PrintPatchEntrys(entrys, crawler, message, cve, repoName);
-                    Console.ReadLine();
+                  //  Console.ReadLine();
                 }
             }
         }
