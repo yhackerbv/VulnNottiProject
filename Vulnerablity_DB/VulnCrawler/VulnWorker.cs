@@ -28,6 +28,7 @@ namespace VulnCrawler
                     continue;
                 }
                 foreach (var parent in commit.Parents) {
+
                     // 부모 커밋과 현재 커밋을 Compare 하여 패치 내역을 가져옴
                     var patch = crawler.Repository.Diff.Compare<Patch>(parent.Tree, commit.Tree);
                     // 패치 엔트리 파일 배열 중에 파일 확장자가 .py인 것만 가져옴
