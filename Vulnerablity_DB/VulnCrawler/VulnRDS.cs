@@ -29,7 +29,18 @@ namespace VulnCrawler
         {
             public int UserId { get; set; } = -1;/* 유저 ID */
             public string RepositName { get; set; } = "NULL"; /* 유저 레파지토리 이름 */
-            public string VulnId { get; set; } = "NULL"; /* 취약점 vuln ID */
+            public int VulnId { get; set; } = -1; /* 취약점 vuln ID */
+        }
+        //
+        public class _Vuln
+        {
+            public int VulnId { get; set; } = -1; /* 취약점 ID */
+            public string Cve { get; set; } = "NULL"; /* 취약점 CVE */
+            public string FuncName { get; set; } = "NULL"; /* 취약점 함수 이름 */
+            public int LenFunc { get; set; } = -1; /* 취약점 함수 길이 */
+            public string Code { get; set; } = "NULL"; /* 취약점 소스 코드 */
+            public string BlockHash { get; set; } = "NULL";/* 취약점 블록 해시 값 */
+            public string Url { get; set; } = "NULL"; /* 취약점 URL */
         }
         //connect
         public static void Connect(AWS.Account account, string dbName)
@@ -52,19 +63,6 @@ namespace VulnCrawler
         public static void InsertVulnData(Vuln vuln)
         {
             String sql = string.Empty;
-            //DB에 취약점 데이터가 이미 있는지 검사
-            /*
-            
-            sql = "select count(*) from vulnInfo where cve like '" + vuln.Cve + "' and numBlock like '" +vuln.NumBlock + "'" ;
-            MySqlCommand cmd = new MySqlCommand(sql, Conn);
-            int RecordCount = Convert.ToInt32(cmd.ExecuteScalar());
-            //CVE & block num 중복인 경우
-            if (RecordCount > 0)
-            {
-                //추가하지 않음 
-                return;
-            }
-            */
             // vulnId setting  (마지막 vulnId +1)
             MySqlCommand cmd = null;
 
@@ -105,23 +103,65 @@ namespace VulnCrawler
             }
 
         }
+        public static void _InsertVulnData(_Vuln vuln)
+        {
+            String sql = string.Empty;
+            // vulnId setting  (마지막 vulnId +1)
+            MySqlCommand cmd = null;
+
+            int last_vulnId = 1;
+            try
+            {
+                sql = "select max(vulnId) from vuln_Info";
+                cmd = new MySqlCommand(sql, Conn);
+                last_vulnId = (Convert.ToInt32(cmd.ExecuteScalar())) + 1;
+            }
+            catch (Exception)
+            {
+                last_vulnId = 1;
+            }
+
+            Retry:
+
+            //DB insert
+            try
+            {
+                cmd = new MySqlCommand();
+                cmd.Connection = Conn;
+                //db에 추가
+                cmd.CommandText = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) VALUES(@vulnId, @cve, @funcName, @lenFunc, @code, @blockHash, @url)";
+                cmd.Parameters.AddWithValue("@vulnId", last_vulnId);
+                cmd.Parameters.AddWithValue("@cve", $"'{vuln.Cve}'");
+                cmd.Parameters.AddWithValue("@funcName", $"'{vuln.FuncName}'");
+                cmd.Parameters.AddWithValue("@lenFunc", $"'{vuln.LenFunc}'");
+                cmd.Parameters.AddWithValue("@code", $"'{vuln.Code}'");
+                cmd.Parameters.AddWithValue("@blockHash", $"'{vuln.BlockHash}'");
+                cmd.Parameters.AddWithValue("@url", $"'{vuln.Url}'");
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) " +
+                       $"VALUES({last_vulnId}, {vuln.Cve}, '{vuln.FuncName}', '{vuln.LenFunc}', {vuln.Code},'{vuln.BlockHash}', '{vuln.Url}')";
+                Console.WriteLine(sql);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
+                Console.ReadLine();
+            }
+        }
         public static void InsertUserData(User user)
         {
             Conn.Open();
             String sql = string.Empty;
             MySqlCommand cmd = null;
-            /*
-            //DB에 취약점 데이터가 이미 있는지 검사
-            String sql = "select count(*) from vulnInfo where cve like '" + user. + "'";
-            MySqlCommand cmd = new MySqlCommand(sql, Conn);
-            int RecordCount = Convert.ToInt32(cmd.ExecuteScalar());
-            //CVE 중복인 경우
-            if (RecordCount > 0)
-            {
-                Console.WriteLine("이미 cve가 존재함");
-            }
-            */
-            // userId setting  (마지막 userId +1)
+
+            //user_id setting
             int last_userId = 1;
             try
             {
@@ -134,65 +174,218 @@ namespace VulnCrawler
                 last_userId = 1;
             }
 
-            //DB insert
+            Retry:
+
+            //insert 
             try
             {
-                sql = "INSERT INTO userInfo(userId, repositName, vulnInfo) " + $"VALUES({last_userId}, {user.RepositName}, '{user.VulnId}')";
+                cmd = new MySqlCommand();
+                cmd.Connection = Conn;
+                //db에 추가
+                cmd.CommandText = "INSERT INTO userInfo(userId, repositName, vulnId) VALUES(@userId, @repositName, @vulnId)";
+                cmd.Parameters.AddWithValue("@userId", last_userId);
+                cmd.Parameters.AddWithValue("@repositName", $"'{user.RepositName}'");
+                cmd.Parameters.AddWithValue("@vulnInfo", $"'{user.VulnId}'");
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "INSERT INTO userInfo(userId, repositName, vulnId) " + $"VALUES({last_userId},'{user.RepositName}','{user.VulnId}')";
                 Console.WriteLine(sql);
-                cmd = new MySqlCommand(sql, Conn);
-                cmd.ExecuteNonQuery();                
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
+                Console.ReadLine();
             }
         }
-        public static Vuln SearchVulnCve(int _vulnId)
-        {
-            Vuln vuln = new Vuln();
-            //특정 cve 가 있는지 검사
-            String sql = "select * from vulnInfo where cve like '" + _vulnId + "'";
-            MySqlCommand cmd = new MySqlCommand(sql, Conn);
-            MySqlDataReader rdr = cmd.ExecuteReader();
-            while (rdr.Read())
+        public static void UpdateVulnData(int _vulnId, _Vuln vuln) {
+            String sql = string.Empty;
+            MySqlCommand cmd = null;
+
+            Retry:
+
+            //DB update
+            try
             {
-                vuln.VulnId = Convert.ToInt32(rdr["vulnId"]);
-                vuln.LenBlock = Convert.ToInt32(rdr["lenBlock"]);
-                vuln.Cve = Convert.ToString(rdr["cve"]);
-                vuln.FuncName = Convert.ToString(rdr["funcName"]);
-                vuln.NumBlock = Convert.ToInt32(rdr["numBlock"]);
-                vuln.CodeOriBefore = Convert.ToString(rdr["codeOriBefore"]);
-                vuln.CodeOriAfter = Convert.ToString(rdr["codeOriAfter"]);
-                vuln.CodeAbsBefore = Convert.ToString(rdr["codeAbsBefore"]); ;
-                vuln.CodeAbsAfter = Convert.ToString(rdr["codeAbsAfter"]);
-                vuln.BlockHash = Convert.ToString(rdr["blockHash"]);
+                cmd = new MySqlCommand();
+                cmd.Connection = Conn;
+                //해당 vuln Update
+                cmd.CommandText = "UPDATE vuln_Info SET cve=@cve,funName=@funName,lenFunc=@lenFunc,code=@code,blockHash=@blockHash,url=@url WHERE vulnId=@vunId";
+                cmd.Parameters.AddWithValue("@vulnId", _vulnId);
+                cmd.Parameters.AddWithValue("@cve", $"'{vuln.Cve}'");
+                cmd.Parameters.AddWithValue("@funcName", $"'{vuln.FuncName}'");
+                cmd.Parameters.AddWithValue("@lenFunc", $"'{vuln.LenFunc}'");
+                cmd.Parameters.AddWithValue("@code", $"'{vuln.Code}'");
+                cmd.Parameters.AddWithValue("@blockHash", $"'{vuln.BlockHash}'");
+                cmd.Parameters.AddWithValue("@url", $"'{vuln.Url}'");
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "UPDATE vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) " +
+                       $"VALUES({_vulnId}, {vuln.Cve}, '{vuln.FuncName}', '{vuln.LenFunc}', {vuln.Code},'{vuln.BlockHash}', '{vuln.Url}')";
+                Console.WriteLine(sql);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
+                Console.ReadLine();
+            }
+            return;
+        }
+        public static void UpdateUserData(int _userId, User user) 
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = null;
+
+            Retry:
+
+            //DB update
+            try
+            {
+                cmd = new MySqlCommand();
+                cmd.Connection = Conn;
+                //해당 user Update
+                cmd.CommandText = "UPDATE userInfo SET repositName=@repositName, vulnId=@vulnId WHERE userId=@userId";
+                cmd.Parameters.AddWithValue("@userId", _userId);
+                cmd.Parameters.AddWithValue("@repositName", $"'{user.RepositName}'");
+                cmd.Parameters.AddWithValue("@vulnId", $"'{user.VulnId}'");
+
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "UPDATE userInfo(userId, repositName, vulnId) " +
+                       $"VALUES({_userId}, '{user.RepositName}', '{user.VulnId}')";
+                Console.WriteLine(sql);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
+                Console.ReadLine();
+            }
+            return;
+        }
+        public static _Vuln SelectVulnData(int _vulnId) {
+            _Vuln vuln = new _Vuln();
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT * FROM vuln_Info";
+
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter("SELECT * FROM userInfo", Conn);
+            da.Fill(ds);
+
+            //vuln에 입력
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                vuln.VulnId = Convert.ToInt32(row["vulnId"]);
+                vuln.Cve = Convert.ToString(row["cve"]);
+                vuln.FuncName = Convert.ToString(row["funcName"]);
+                vuln.LenFunc = Convert.ToInt32(row["lenFunc"]);
+                vuln.Code = Convert.ToString(row["code"]);
+                vuln.BlockHash = Convert.ToString(row["blockHash"]);
+                vuln.Url = Convert.ToString(row["url"]);
+            }
+            //해당 vuln 반환
             return vuln;
         }
+        public static User SelectUserData(int _userId)
+        {
+            User user = new User();
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT * FROM userInfo";
 
-        public static bool CheckVulnData(int _vulnId)
-        {
-            string sql = "select count(*) from vulnInfo where vulnId like '" + _vulnId+ "'";
-            MySqlCommand cmd = new MySqlCommand(sql, Conn);
-            int RecordCount = Convert.ToInt32(cmd.ExecuteScalar());
-            if (RecordCount > 0)
-                return true;
-            else
-                return false;
+            //해당 user 찾음
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter("SELECT * FROM userInfo", Conn);
+            da.Fill(ds);
+
+            //user에 입력
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                user.VulnId = Convert.ToInt32(row["vulnId"]);
+                user.RepositName = Convert.ToString(row["repositName"]);
+                user.UserId = Convert.ToInt32(row["userId"]);
+            }
+            //해당 user 반환
+            return user;
         }
-        public static bool CheckUserData(int _userId)
-        {
-            string sql = "select count(*) from userInfo where vulnId like '" + _userId + "'";
-            MySqlCommand cmd = new MySqlCommand(sql, Conn);
-            int RecordCount = Convert.ToInt32(cmd.ExecuteScalar());
-            if (RecordCount > 0)
-                return true;
-            else
-                return false;
+        public static void DeleteVulnData(int _vulnId) {
+            String sql = string.Empty;
+            MySqlCommand cmd = null;
+
+            Retry:
+
+            //DB insert
+            try
+            {
+                cmd = new MySqlCommand();
+                cmd.Connection = Conn;
+                cmd.CommandText = "DELETE FROM vuln_Info WHERE vulnId=@vulnId";
+                cmd.Parameters.AddWithValue("@vulnId", _vulnId);
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "DELETE FROM vuln_Info WHERE vulnId="+ _vulnId;
+                Console.WriteLine(sql);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
+                Console.ReadLine();
+            }
         }
-        //public static IEnumerable<string> SearchVulnData(int _len)
-        //{
-        //
-        //}
+        public static void DeleteUserData(int _userId)
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = null;
+
+            Retry:
+
+            try
+            {
+                cmd = new MySqlCommand();
+                cmd.Connection = Conn;
+                cmd.CommandText = "DELETE FROM userInfo WHERE userId=@userId";
+                cmd.Parameters.AddWithValue("@userId", _userId);
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "DELETE FROM userInfo WHERE userId=" + _userId;
+                Console.WriteLine(sql);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                    Connect(Account, DbName);
+                    goto Retry;
+                }
+                Console.ReadLine();
+            }
+        }
     }
 }
