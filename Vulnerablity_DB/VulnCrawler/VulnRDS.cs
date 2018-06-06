@@ -31,7 +31,6 @@ namespace VulnCrawler
             public string RepositName { get; set; } = "NULL"; /* 유저 레파지토리 이름 */
             public int VulnId { get; set; } = -1; /* 취약점 vuln ID */
         }
-        //
         public class _Vuln
         {
             public int VulnId { get; set; } = -1; /* 취약점 ID */
@@ -63,15 +62,14 @@ namespace VulnCrawler
         public static void InsertVulnData(Vuln vuln)
         {
             String sql = string.Empty;
-            // vulnId setting  (마지막 vulnId +1)
             MySqlCommand cmd = null;
 
+            // vulnId setting  (마지막 vulnId +1)
             int last_vulnId = 1;
             try
             {
                 sql = "select max(vulnId) from vulnInfo";
                 cmd = new MySqlCommand(sql, Conn);
-
                 last_vulnId = (Convert.ToInt32(cmd.ExecuteScalar())) + 1;
             }
             catch(Exception)
@@ -133,7 +131,7 @@ namespace VulnCrawler
                 cmd.Parameters.AddWithValue("@vulnId", last_vulnId);
                 cmd.Parameters.AddWithValue("@cve", $"'{vuln.Cve}'");
                 cmd.Parameters.AddWithValue("@funcName", $"'{vuln.FuncName}'");
-                cmd.Parameters.AddWithValue("@lenFunc", $"'{vuln.LenFunc}'");
+                cmd.Parameters.AddWithValue("@lenFunc", $"{vuln.LenFunc}");
                 cmd.Parameters.AddWithValue("@code", $"'{vuln.Code}'");
                 cmd.Parameters.AddWithValue("@blockHash", $"'{vuln.BlockHash}'");
                 cmd.Parameters.AddWithValue("@url", $"'{vuln.Url}'");
@@ -185,7 +183,7 @@ namespace VulnCrawler
                 cmd.CommandText = "INSERT INTO userInfo(userId, repositName, vulnId) VALUES(@userId, @repositName, @vulnId)";
                 cmd.Parameters.AddWithValue("@userId", last_userId);
                 cmd.Parameters.AddWithValue("@repositName", $"'{user.RepositName}'");
-                cmd.Parameters.AddWithValue("@vulnInfo", $"'{user.VulnId}'");
+                cmd.Parameters.AddWithValue("@vulnInfo", $"{user.VulnId}");
                 cmd.ExecuteNonQuery();
                 //콘솔출력용
                 sql = "INSERT INTO userInfo(userId, repositName, vulnId) " + $"VALUES({last_userId},'{user.RepositName}','{user.VulnId}')";
@@ -215,11 +213,11 @@ namespace VulnCrawler
                 cmd = new MySqlCommand();
                 cmd.Connection = Conn;
                 //해당 vuln Update
-                cmd.CommandText = "UPDATE vuln_Info SET cve=@cve,funName=@funName,lenFunc=@lenFunc,code=@code,blockHash=@blockHash,url=@url WHERE vulnId=@vunId";
+                cmd.CommandText = "UPDATE vuln_Info SET cve=@cve,funcName=@funcName,lenFunc=@lenFunc,code=@code,blockHash=@blockHash,url=@url WHERE vulnId=@vulnId";
                 cmd.Parameters.AddWithValue("@vulnId", _vulnId);
                 cmd.Parameters.AddWithValue("@cve", $"'{vuln.Cve}'");
                 cmd.Parameters.AddWithValue("@funcName", $"'{vuln.FuncName}'");
-                cmd.Parameters.AddWithValue("@lenFunc", $"'{vuln.LenFunc}'");
+                cmd.Parameters.AddWithValue("@lenFunc", $"{vuln.LenFunc}");
                 cmd.Parameters.AddWithValue("@code", $"'{vuln.Code}'");
                 cmd.Parameters.AddWithValue("@blockHash", $"'{vuln.BlockHash}'");
                 cmd.Parameters.AddWithValue("@url", $"'{vuln.Url}'");
