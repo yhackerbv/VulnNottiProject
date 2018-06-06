@@ -12,11 +12,14 @@ namespace VulnCrawler
     {
         //        protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ (?<{MethodName}>(static)?( const )? [\w]+ [\w]+\([\w \*\,\t\n]*[\)\,])";
         /* 함수 패턴 정규식  */
-        protected override string RegexFuncPattern => $@"(?<{MethodName}>(unsigned|static)?( const )? [\w]+ [\w]+\(([\w \*\,\t\n])*[\)\,])";
+        protected override string RegexFuncPattern => $@"^[\w \*]*(?<{MethodName}>[\w\*]+ [\w\*]+\(([\w \*\,\t\n])*[\)\,])";
         /* 검색 파일 타입 */
         protected override string Extension => ".c";
         /* 예약어 파일명 */
         protected override string ReservedFileName => "CReserved.txt";
+
+        
+
         /// <summary>
         /// 패치 코드에서 함수 목록 뽑는 정규식
         /// </summary>
@@ -549,7 +552,7 @@ namespace VulnCrawler
             {
                 return string.Empty;
             }
-            foreach (var var in varList.Vars)
+            foreach (var var in varList.Vars.Where(s => s.All(c => char.IsLower(c) ||  c == '>' || c == '-' || c == '*' || c == '_')))
             {
                 if (!dict.ContainsKey(var))
                 {
@@ -637,6 +640,203 @@ namespace VulnCrawler
 
 
             return temp;
+        }
+
+        public override IDictionary<int, List<string>> CrawlUserCode(StreamReader reader)
+        {
+            var dict = new Dictionary<int, List<string>>();
+            StringBuilder oldBuilder = new StringBuilder();
+
+            bool found = false;
+            bool found2 = false;
+            bool commentLine = false;
+            int bracketCount = -1;
+            string stringPattern = @"[""].*[""]";
+            string commentPattern = @"\/\*.+\*\/";
+            string commentPattern2 = @"\/\*";
+            string commentPattern3 = @"\*\/";
+            var regex1 = new Regex(commentPattern3, RegexOptions.Compiled);
+            var regex2 = new Regex(stringPattern, RegexOptions.Compiled);
+            var regex3 = new Regex(commentPattern2, RegexOptions.Compiled);
+            var regex4 = new Regex(commentPattern, RegexOptions.Compiled);
+
+            bool found3 = false;
+
+            
+            while (!reader.EndOfStream)
+            {
+                string line = reader.ReadLine();
+                Console.WriteLine(line);
+                // 메서드를 찾은 경우
+                if (found3)
+                {
+                    string obStr = oldBuilder.ToString();
+                    obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
+
+                    if (!dict.ContainsKey(obStr.Length))
+                    {
+                        dict[obStr.Length] = new List<string>();
+                    }
+                    dict[obStr.Length].Add(MD5HashFunc(obStr));
+                    oldBuilder.Clear();
+                    found = false;
+                    found2 = false;
+                    found3 = false;
+                    bracketCount = -1;
+                    commentLine = false;
+
+                }
+                if (found)
+                {
+                    string trim = line.Trim();
+                    // 범위 주석 진행되고 있으면 넘어감
+                    if (trim.StartsWith("#"))
+                    {
+                        continue;
+                    }
+                    if (commentLine)
+                    {
+                        // 혹시 범위 주석이 끝났는지 체크
+                        if (regex1.IsMatch(trim))
+                        {
+                            commentLine = false;
+                            trim = regex1.Split(trim)[1];
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    // "" 문자열 제거
+                    string removeString = regex2.Replace(trim, "");
+                    // /* ~ 패턴
+                    if (regex3.IsMatch(trim))
+                    {
+                        // /* ~ */ 패턴이 아닌 경우
+                        if (!regex4.IsMatch(trim))
+                        {
+                            commentLine = true;
+                        }
+                        trim = Regex.Split(trim, "/*")[0];
+
+                    }
+                    // 비어있는 경우 넘어감
+                    if (string.IsNullOrWhiteSpace(trim))
+                    {
+                        continue;
+                    }
+                    int openBracketCount = removeString.Count(c => c == '{');
+                    int closeBracketCount = removeString.Count(c => c == '}');
+                    int subtract = openBracketCount - closeBracketCount;
+                    bracketCount += subtract;
+                    // 메서드 시작 괄호 찾은 경우
+                    if (found2)
+                    {
+
+                        oldBuilder.AppendLine(line);
+                        // 괄호가 모두 닫혔으니 종료
+                        if (bracketCount < 0)
+                        {
+                            if (reader.EndOfStream)
+                            {
+                                Console.WriteLine("파일끝");
+                            }
+                            found3 = true;
+                            continue;
+                        }
+                    }
+                    else // 메서드는 찾았으나 아직 시작 괄호를 못찾은 경우
+                    {
+                        oldBuilder.AppendLine(line);
+                        if (openBracketCount > 0)
+                        {
+
+                            found2 = true;
+                        }
+                        else
+                        {
+                            //아직 { 괄호를 못찾았는데 );를 만났다면 메서드 선언 부분이니 넘어감
+                            if (trim.EndsWith(");"))
+                            {
+                                Console.WriteLine("-------");
+                                Console.WriteLine(trim);
+                                Console.WriteLine("-----");
+                                found = false;
+                                oldBuilder.Clear();
+                                continue;
+                            }
+                        }
+                    }
+                }
+                // 아직 메서드를 못찾은 경우
+                else
+                {
+                    //아직 { 괄호를 못찾았는데 );를 만났다면 메서드 선언 부분이니 넘어감
+                    if (line.Trim().EndsWith(");"))
+                    {
+                        found = false;
+                        oldBuilder.Clear();
+                        continue;
+                    }
+
+                    // 메서드 찾았는지 확인
+                    if (Regex.IsMatch(line, RegexFuncPattern))
+                    {
+                        string trim = line.Trim();
+                        // 주석으로 시작했다면 넘어감
+                        if (trim.StartsWith("//"))
+                        {
+                            continue;
+                        }
+
+                        if (trim.StartsWith("/*"))
+                        {
+                            continue;
+                        }
+
+                        // 만약 찾은 메서드 라인에서 중괄호 {가 시작된 경우
+                        if (trim.Contains("{"))
+                        {
+                            // 동시에 } 닫히기까지 한 경우 드물겠지만..
+                            if (trim.EndsWith("}"))
+                            {
+                                oldBuilder.AppendLine(line);
+                                found3 = true;
+                                continue;
+                            }
+                            found2 = true;
+                        }
+                        // 메서드 찾음
+                        found = true;
+                        oldBuilder.AppendLine(line);
+                    }
+                }
+
+            }
+
+            if (found3)
+            {
+                string obStr = oldBuilder.ToString();
+                obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
+
+                if (!dict.ContainsKey(obStr.Length))
+                {
+                    dict[obStr.Length] = new List<string>();
+                }
+                dict[obStr.Length].Add(MD5HashFunc(obStr));
+                oldBuilder.Clear();
+                found = false;
+                found2 = false;
+                found3 = false;
+                bracketCount = -1;
+                commentLine = false;
+
+            }
+
+
+            return dict;
+
+            
         }
     }
 }

@@ -45,6 +45,7 @@ namespace VulnCrawler
         ~VulnAbstractCrawler() {
             Repository?.Dispose();
         }
+
         private void LoadReservedList()
         {
             try
@@ -119,6 +120,8 @@ namespace VulnCrawler
         /// <param name="methodName">찾을 메서드 이름</param>
         /// <returns>함수 문자열</returns>
         protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
+
+        public abstract IDictionary<int, List<string>> CrawlUserCode(StreamReader reader);
 
         protected abstract IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList);
         /// <summary>
@@ -401,11 +404,11 @@ namespace VulnCrawler
                                     return false;
                                 }
 
-                                /* 대문자로 구성된 변수면 넘어감 */
-                                if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
-                                {
-                                    return false;
-                                }
+                                ///* 대문자로 구성된 변수면 넘어감 */
+                                //if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
+                                //{
+                                //    return false;
+                                //}
 
                                 return true;
                             })
@@ -447,11 +450,11 @@ namespace VulnCrawler
                                     return false;
                                 }
 
-                                /* 대문자로 구성된 변수면 넘어감 */
-                                if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
-                                {
-                                    return false;
-                                }
+                                ///* 대문자로 구성된 변수면 넘어감 */
+                                //if (skipDefine && m.Value.All(c => char.IsUpper(c) || !char.IsLetter(c)))
+                                //{
+                                //    return false;
+                                //}
 
                                 return true;
                             })

@@ -80,5 +80,10 @@ namespace VulnCrawler
         {
             throw new NotImplementedException();
         }
+
+        public override IDictionary<int, List<string>> CrawlUserCode(StreamReader reader)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

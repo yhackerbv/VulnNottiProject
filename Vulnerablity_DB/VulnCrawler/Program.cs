@@ -81,7 +81,7 @@ namespace VulnCrawler
                 /* 폴더 중에 linux가 있으면 잠깐 넘어감 (너무 커서 테스트 힘듦) */
                 if (directory.Contains("linux"))
                 {
-                   // continue;
+                    continue;
                 }
                 // 템플릿 패턴화 T : VulnAbstractCrawler
                 VulnWorker.Run<VulnC>(directory);

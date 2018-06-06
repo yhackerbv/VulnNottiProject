@@ -101,51 +101,67 @@ namespace VulnCrawler
                             Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine($"메서드 이름 : {methodName}");
                             Console.ResetColor();
-                            foreach (var block in blocks)
+                            //foreach (var block in blocks)
+                            //{
+                            //    /* 크리티컬 블록이 아니면 볼 필요 없으니 넘어감 */
+                            //    if (!block.HasCritical)
+                            //    {
+                            //        // Console.WriteLine("크리티컬 아님");
+                            //        continue;
+                            //    }
+
+
+                            //    if (block.HasCritical)
+                            //    {
+                            //        Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                            //    }
+                            //    else
+                            //    {
+                            //        Console.BackgroundColor = ConsoleColor.DarkGreen;
+                            //    }
+                            //    /* 블록 정보 출력(블록 번호, 블록 소스코드, 블록 추상화 코드, 블록 해쉬값) */
+                            //    Console.WriteLine($"=====block({block.Num}, {block.HasCritical.ToString()})");
+                            //    Console.WriteLine(block.Code);
+                            //    Console.ResetColor();
+                            //    Console.WriteLine($"AbsCode = \n{block.AbsCode}");
+                            //    Console.WriteLine($"MD5 = {block.Hash}");
+
+                            //    /* base64 인코딩(MySQL에 들어갈 수 없는 문자열이 있을 수 있으므로 인코딩) */
+                            //    byte[] funcNameBytes = Encoding.Unicode.GetBytes(methodName);
+                            //    byte[] codeOriBeforeBytes = Encoding.Unicode.GetBytes(oriFunc);
+                            //    byte[] codeAbsBeforeBytes = Encoding.Unicode.GetBytes(block.AbsCode);
+
+                            //    /* VulnDB에 하나의 레코드로 들어가는 하나의 취약점 객체 */
+                            //    VulnRDS.Vuln vuln = new VulnRDS.Vuln()
+                            //    {
+                            //        Cve = cve,
+                            //        BlockHash = block.Hash,
+                            //        LenBlock = block.Code.Length,
+                            //        FuncName = Convert.ToBase64String(funcNameBytes),
+                            //        //CodeOriBefore = Convert.ToBase64String(codeOriBeforeBytes),
+                            //        //CodeAbsBefore = Convert.ToBase64String(codeAbsBeforeBytes),
+                            //        //NumBlock = block.Num,
+                            //    };
+                            //    Console.WriteLine($"Vuln FuncName:{vuln.FuncName}");
+                            /* VulnDB에 추가 */
+                            //VulnRDS.InsertVulnData(vuln);
+                            //}
+                            string abstractCode = self.Abstract(oriFunc, new Dictionary<string, string>(), new Dictionary<string, string>());
+
+                            byte[] funcNameBytes = Encoding.Unicode.GetBytes(methodName);
+                            byte[] absCodeBytes = Encoding.Unicode.GetBytes(abstractCode);
+                            VulnRDS.Vuln vuln = new VulnRDS.Vuln()
                             {
-                                /* 크리티컬 블록이 아니면 볼 필요 없으니 넘어감 */
-                                if (!block.HasCritical)
-                                {
-                                    // Console.WriteLine("크리티컬 아님");
-                                    continue;
-                                }
+                                BlockHash = Convert.ToBase64String(absCodeBytes),
+                                Cve = cve,
+                                LenBlock = oriFunc.Length,
+                                FuncName = Convert.ToBase64String(funcNameBytes),
+                            };
+                            Console.WriteLine(vuln.BlockHash);
+                            Console.ReadLine();
+                            /* VulnDB에 추가 */
+                            //VulnRDS.InsertVulnData(vuln);
 
-
-                                if (block.HasCritical)
-                                {
-                                    Console.BackgroundColor = ConsoleColor.DarkMagenta;
-                                }
-                                else
-                                {
-                                    Console.BackgroundColor = ConsoleColor.DarkGreen;
-                                }
-                                /* 블록 정보 출력(블록 번호, 블록 소스코드, 블록 추상화 코드, 블록 해쉬값) */
-                                Console.WriteLine($"=====block({block.Num}, {block.HasCritical.ToString()})");
-                                Console.WriteLine(block.Code);
-                                Console.ResetColor();
-                                Console.WriteLine($"AbsCode = \n{block.AbsCode}");
-                                Console.WriteLine($"MD5 = {block.Hash}");
-
-                                /* base64 인코딩(MySQL에 들어갈 수 없는 문자열이 있을 수 있으므로 인코딩) */
-                                byte[] funcNameBytes = Encoding.Unicode.GetBytes(methodName);
-                                byte[] codeOriBeforeBytes = Encoding.Unicode.GetBytes(oriFunc);
-                                byte[] codeAbsBeforeBytes = Encoding.Unicode.GetBytes(block.AbsCode);
-
-                                /* VulnDB에 하나의 레코드로 들어가는 하나의 취약점 객체 */
-                                VulnRDS.Vuln vuln = new VulnRDS.Vuln()
-                                {
-                                    Cve = cve,
-                                    BlockHash = block.Hash,
-                                    LenBlock = block.Code.Length,
-                                    FuncName = Convert.ToBase64String(funcNameBytes),
-                                    CodeOriBefore = Convert.ToBase64String(codeOriBeforeBytes),
-                                    CodeAbsBefore = Convert.ToBase64String(codeAbsBeforeBytes),
-                                    NumBlock = block.Num,
-                                };
-                                Console.WriteLine($"Vuln FuncName:{vuln.FuncName}");
-                                /* VulnDB에 추가 */
-                                VulnRDS.InsertVulnData(vuln);
-                            }
                         }
                     }
                     else

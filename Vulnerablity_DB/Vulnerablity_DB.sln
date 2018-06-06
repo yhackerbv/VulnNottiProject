@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VulnCrawler", "VulnCrawler\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DownloaderGithubClone", "DownloaderGithubClone\DownloaderGithubClone.csproj", "{17D012E2-AD26-437B-83DC-EC8E09AF0F8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VulnUserCodeAnalyzer", "VulnUserCodeAnalyzer\VulnUserCodeAnalyzer.csproj", "{84C36798-2A15-481E-96D5-E6C547114161}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{17D012E2-AD26-437B-83DC-EC8E09AF0F8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17D012E2-AD26-437B-83DC-EC8E09AF0F8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17D012E2-AD26-437B-83DC-EC8E09AF0F8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84C36798-2A15-481E-96D5-E6C547114161}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84C36798-2A15-481E-96D5-E6C547114161}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84C36798-2A15-481E-96D5-E6C547114161}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84C36798-2A15-481E-96D5-E6C547114161}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
