@@ -104,9 +104,9 @@ namespace VulnCrawler
         public static void _InsertVulnData(_Vuln vuln)
         {
             String sql = string.Empty;
-            // vulnId setting  (마지막 vulnId +1)
             MySqlCommand cmd = null;
 
+            // vulnId setting  (마지막 vulnId +1)
             int last_vulnId = 1;
             try
             {
@@ -129,12 +129,12 @@ namespace VulnCrawler
                 //db에 추가
                 cmd.CommandText = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) VALUES(@vulnId, @cve, @funcName, @lenFunc, @code, @blockHash, @url)";
                 cmd.Parameters.AddWithValue("@vulnId", last_vulnId);
-                cmd.Parameters.AddWithValue("@cve", $"'{vuln.Cve}'");
-                cmd.Parameters.AddWithValue("@funcName", $"'{vuln.FuncName}'");
+                cmd.Parameters.AddWithValue("@cve", $"{vuln.Cve}");
+                cmd.Parameters.AddWithValue("@funcName", $"{vuln.FuncName}");
                 cmd.Parameters.AddWithValue("@lenFunc", $"{vuln.LenFunc}");
-                cmd.Parameters.AddWithValue("@code", $"'{vuln.Code}'");
-                cmd.Parameters.AddWithValue("@blockHash", $"'{vuln.BlockHash}'");
-                cmd.Parameters.AddWithValue("@url", $"'{vuln.Url}'");
+                cmd.Parameters.AddWithValue("@code", $"{vuln.Code}");
+                cmd.Parameters.AddWithValue("@blockHash", $"{vuln.BlockHash}");
+                cmd.Parameters.AddWithValue("@url", $"{vuln.Url}");
                 cmd.ExecuteNonQuery();
                 //콘솔출력용
                 sql = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) " +
@@ -182,7 +182,7 @@ namespace VulnCrawler
                 //db에 추가
                 cmd.CommandText = "INSERT INTO userInfo(userId, repositName, vulnId) VALUES(@userId, @repositName, @vulnId)";
                 cmd.Parameters.AddWithValue("@userId", last_userId);
-                cmd.Parameters.AddWithValue("@repositName", $"'{user.RepositName}'");
+                cmd.Parameters.AddWithValue("@repositName", $"{user.RepositName}");
                 cmd.Parameters.AddWithValue("@vulnInfo", $"{user.VulnId}");
                 cmd.ExecuteNonQuery();
                 //콘솔출력용
@@ -215,12 +215,12 @@ namespace VulnCrawler
                 //해당 vuln Update
                 cmd.CommandText = "UPDATE vuln_Info SET cve=@cve,funcName=@funcName,lenFunc=@lenFunc,code=@code,blockHash=@blockHash,url=@url WHERE vulnId=@vulnId";
                 cmd.Parameters.AddWithValue("@vulnId", _vulnId);
-                cmd.Parameters.AddWithValue("@cve", $"'{vuln.Cve}'");
-                cmd.Parameters.AddWithValue("@funcName", $"'{vuln.FuncName}'");
+                cmd.Parameters.AddWithValue("@cve", $"{vuln.Cve}");
+                cmd.Parameters.AddWithValue("@funcName", $"{vuln.FuncName}");
                 cmd.Parameters.AddWithValue("@lenFunc", $"{vuln.LenFunc}");
-                cmd.Parameters.AddWithValue("@code", $"'{vuln.Code}'");
-                cmd.Parameters.AddWithValue("@blockHash", $"'{vuln.BlockHash}'");
-                cmd.Parameters.AddWithValue("@url", $"'{vuln.Url}'");
+                cmd.Parameters.AddWithValue("@code", $"{vuln.Code}");
+                cmd.Parameters.AddWithValue("@blockHash", $"{vuln.BlockHash}");
+                cmd.Parameters.AddWithValue("@url", $"{vuln.Url}");
                 cmd.ExecuteNonQuery();
                 //콘솔출력용
                 sql = "UPDATE vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) " +
@@ -255,10 +255,10 @@ namespace VulnCrawler
                 //해당 user Update
                 cmd.CommandText = "UPDATE userInfo SET repositName=@repositName, vulnId=@vulnId WHERE userId=@userId";
                 cmd.Parameters.AddWithValue("@userId", _userId);
-                cmd.Parameters.AddWithValue("@repositName", $"'{user.RepositName}'");
-                cmd.Parameters.AddWithValue("@vulnId", $"'{user.VulnId}'");
-
+                cmd.Parameters.AddWithValue("@repositName", $"{user.RepositName}");
+                cmd.Parameters.AddWithValue("@vulnId", $"{user.VulnId}");
                 cmd.ExecuteNonQuery();
+
                 //콘솔출력용
                 sql = "UPDATE userInfo(userId, repositName, vulnId) " +
                        $"VALUES({_userId}, '{user.RepositName}', '{user.VulnId}')";
@@ -279,13 +279,14 @@ namespace VulnCrawler
         }
         public static _Vuln SelectVulnData(int _vulnId) {
             _Vuln vuln = new _Vuln();
+
             String sql = string.Empty;
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = Conn;
             cmd.CommandText = "SELECT * FROM vuln_Info";
 
             System.Data.DataSet ds = new System.Data.DataSet();
-            MySqlDataAdapter da = new MySqlDataAdapter("SELECT * FROM userInfo", Conn);
+            MySqlDataAdapter da = new MySqlDataAdapter("SELECT * FROM vuln_Info", Conn);
             da.Fill(ds);
 
             //vuln에 입력
@@ -385,5 +386,34 @@ namespace VulnCrawler
                 Console.ReadLine();
             }
         }
+        public static List<_Vuln> SelectVulnbyLen(int _lenFunc)
+        {
+            var list = new List<_Vuln>();
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT * FROM vuln_Info where lenFunc=" + _lenFunc;
+
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter("SELECT * FROM vuln_Info where lenFunc=" + _lenFunc, Conn);
+            da.Fill(ds);
+
+            //vuln에 입력
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                _Vuln vuln = new _Vuln();
+                vuln.VulnId = Convert.ToInt32(row["vulnId"]);
+                vuln.Cve = Convert.ToString(row["cve"]);
+                vuln.FuncName = Convert.ToString(row["funcName"]);
+                vuln.LenFunc = Convert.ToInt32(row["lenFunc"]);
+                vuln.Code = Convert.ToString(row["code"]);
+                vuln.BlockHash = Convert.ToString(row["blockHash"]);
+                vuln.Url = Convert.ToString(row["url"]);
+                list.Add(vuln);
+            }
+            //해당 list 반환
+            return list;
+        }
+
     }
 }
