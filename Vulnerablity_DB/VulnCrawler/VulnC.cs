@@ -716,11 +716,13 @@ namespace VulnCrawler
                     {
                         dict[obStr.Length] = new HashSet<UserBlock>();
                     }
+                    byte[] obStrBytes = Encoding.Unicode.GetBytes(obStr);
+
                     string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
 
                     (dict[obStr.Length] as HashSet<UserBlock>).Add(new UserBlock
                     {
-                        Hash = MD5HashFunc(obStr),
+                        Hash = MD5HashFunc(Convert.ToBase64String(obStrBytes)),
                         Len = obStr.Length,
                         FuncName = funcName,
                     });
@@ -859,12 +861,14 @@ namespace VulnCrawler
                 {
                     dict[obStr.Length] = new HashSet<UserBlock>();
                 }
+                byte[] obStrBytes = Encoding.Unicode.GetBytes(obStr);
+
                 string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
 
 
                 (dict[obStr.Length] as HashSet<UserBlock>).Add(new UserBlock
                 {
-                    Hash = MD5HashFunc(obStr),
+                    Hash = MD5HashFunc(Convert.ToBase64String(obStrBytes)),
                     Len = obStr.Length,
                     FuncName = funcName,
 

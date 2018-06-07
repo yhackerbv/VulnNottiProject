@@ -2,6 +2,7 @@
 using BloomFilter;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,14 +16,17 @@ namespace VulnUserCodeAnalyzer
     {
         static void Main(string[] args)
         {
+            var crawler = new VulnC();
+            //var bytes = Convert.FromBase64String("dgBvAGkAZAAgAGsAdgBtAF8AbQBtAHUAXwBuAGUAdwBfAGMAcgAzACgAcwB0AHIAdQBjAHQAIABrAHYAbQBfAHYAYwBwAHUAIAAqAHYAYwBwAHUAKQANAAoAewANAAoACQBtAG0AdQBfAGYAcgBlAGUAXwByAG8AbwB0AHMAKAB2AGMAcAB1ACkAOwANAAoAfQANAAoA");
+            //var str = Encoding.Unicode.GetString(bytes);
+
+            //Console.WriteLine(str);
+            //Console.WriteLine(crawler.Abstract(str, new Dictionary<string, string>(), new Dictionary<string, string>()));
+            //Console.ReadLine();
 
             // default usage
-            int capacity = 20000000;
+            int capacity = 50000000;
             var filter = new Filter<string>(capacity);
-            //filter.Add("1");
-            //    filter.Add("1");
-            //Console.WriteLine(filter.Contains("1"));
-            //Console.WriteLine(filter.Contains("content2"));
 
             /* AWS 계정 정보 파일 읽음 */
             string txt = File.ReadAllText(@"Account.xml");
@@ -42,6 +46,7 @@ namespace VulnUserCodeAnalyzer
             catch (Exception e)
             {
                 Console.WriteLine($"접속 에러 :: {e.ToString()}");
+                return;
             }
 
             /* AWS 연결 여부 확인 */
@@ -58,13 +63,16 @@ namespace VulnUserCodeAnalyzer
 
             var hashDict = new Dictionary<int, HashSet<VulnAbstractCrawler.UserBlock>>();
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             DirectoryInfo dirInfo = new DirectoryInfo(@"c:\code");
             var codeFiles = dirInfo.EnumerateFiles("*.c", SearchOption.AllDirectories);
             int totalFileCount = codeFiles.Count();
-            var crawler = new VulnC();
+
             int count = 0;
             foreach (var codeFile in codeFiles)
             {
+                
                 Console.WriteLine(codeFile.FullName);
                 using (var reader = codeFile.OpenText())
                 {
@@ -91,14 +99,16 @@ namespace VulnUserCodeAnalyzer
                     Console.Clear();
                     Console.WriteLine($"{count} / {totalFileCount} :: {per.ToString("#0.0")}%, 개체 수 : {hashDict.Count}");
 
-                    //if (count > 100)
-                    //{
-                    //    break;
-                    //}
+                    if (count > 100)
+                    {
+                        break;
+                    }
                 }
 
 
             }
+            
+            var findBlocks = new Queue<VulnAbstractCrawler.UserBlock>();
 
             foreach (var set in hashDict)
             {
@@ -118,10 +128,8 @@ namespace VulnUserCodeAnalyzer
                                 Console.WriteLine("userBlock이 비어있습니다.");
                                 continue;
                             }
-                            
-                            Console.WriteLine($"{userBlock.FuncName} 블록 확인 : DB : {vuln.BlockHash}, User : {userBlock.Hash}");
-                            
-                            
+                            Console.WriteLine($"CVE:{vuln.Cve}, {userBlock.FuncName}, 블록 확인 : DB : {vuln.BlockHash}, User : {userBlock.Hash}");
+                            findBlocks.Enqueue(userBlock);
                         }
                     }
 
@@ -132,6 +140,17 @@ namespace VulnUserCodeAnalyzer
                 //    Console.WriteLine($"{hash.FuncName}, {hash.Hash}, {hash.Len}, {hash.Path}");
                 //}
             }
+
+            stopwatch.Stop();
+
+
+
+
+            var hours = stopwatch.Elapsed.TotalHours;
+            var minutes = stopwatch.Elapsed.TotalMinutes;
+            var seconds = stopwatch.Elapsed.TotalSeconds;
+
+            Console.WriteLine($"경과 시간 {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
 
 
             // 블룸 필터 테스트

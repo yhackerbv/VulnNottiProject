@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using AESENC;
 using System.Security;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace VulnCrawler
 {
@@ -73,6 +74,9 @@ namespace VulnCrawler
                 Console.WriteLine("Repository 목록 찾기 실패");
                 return;
             }
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             // Repository 목록 만큼 반복함.
             foreach (var directory in directorys) {
                 /* 폴더 중에 linux가 있으면 잠깐 넘어감 (너무 커서 테스트 힘듦) */
@@ -83,6 +87,15 @@ namespace VulnCrawler
                 // 템플릿 패턴화 T : VulnAbstractCrawler
                 VulnWorker.Run<VulnC>(directory);
             }
+            stopwatch.Stop();
+            var hours = stopwatch.Elapsed.TotalHours;
+            var minutes = stopwatch.Elapsed.TotalMinutes;
+            var seconds = stopwatch.Elapsed.TotalSeconds;
+
+            Console.WriteLine($"경과 시간 {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
+
+
+
         }
         #region Secure string input
         static String SecureStringToString(SecureString value) {

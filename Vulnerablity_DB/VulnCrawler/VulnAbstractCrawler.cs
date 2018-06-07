@@ -46,6 +46,7 @@ namespace VulnCrawler
                 return hashCode;
             }
         }
+        public string PushUrl { get; set; }
         protected Regex extractMethodLine;
         protected HashSet<string> ReservedList { get; }
         protected abstract string ReservedFileName { get; }
@@ -106,7 +107,14 @@ namespace VulnCrawler
             Console.WriteLine("로딩중");
             Console.WriteLine(path);
             Repository = new Repository(path);
-           
+            PushUrl = Repository.Network.Remotes.FirstOrDefault().PushUrl;
+
+            if (PushUrl.EndsWith(".git"))
+            {
+                PushUrl = PushUrl.Replace(".git", "");
+
+            }
+
             Console.WriteLine("로딩 완료");
             Commits = SearchCommits();
             Console.WriteLine($"Commits Count: {Commits.Count()}");

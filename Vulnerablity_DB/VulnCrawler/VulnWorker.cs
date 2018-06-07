@@ -22,20 +22,29 @@ namespace VulnCrawler
             var commits = crawler.Commits;
             int totalCount = commits.Count();
             int count = 0;
+            string dir = Path.Combine(dirPath, "url.txt");
+
+            if (File.Exists(dir))
+            {
+                crawler.PushUrl = File.ReadAllText(dir);
+            }
             foreach (var commit in commits) {
                 // 커밋 메시지
+                
                 count++;
                 double per = ((double)count / (double)totalCount) * 100;
 
                 Console.Clear();
                 Console.WriteLine($"{count} / {totalCount} :: {per.ToString("#0.0")}%");
-
+                
                 string message = commit.Message;
                 string cve = crawler.GetCVE(message);
                 if (string.IsNullOrEmpty(cve)) {
                     continue;
                 }
-                
+
+                string commitUrl = $"{crawler.PushUrl}/commit/{commit.Sha}";
+
                 foreach (var parent in commit.Parents) {
 
                     try
@@ -49,7 +58,7 @@ namespace VulnCrawler
                         var dsp = dirPath.Split(Path.DirectorySeparatorChar);
                         string repoName = dsp[dsp.Length - 1];
                         // 현재 커밋에 대한 패치 엔트리 배열을 출력함
-                        PrintPatchEntrys(entrys, crawler, message, cve, repoName);
+                        PrintPatchEntrys(entrys, crawler, message, cve, repoName, commitUrl);
                         //  Console.ReadLine();
                     }
                     catch(Exception)
@@ -58,7 +67,7 @@ namespace VulnCrawler
             }
         }
 
-        private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve, string repoName) {
+        private static void PrintPatchEntrys(IEnumerable<PatchEntryChanges> entrys, VulnAbstractCrawler self, string commitMsg, string cve, string repoName, string commitUrl) {
             foreach (var entry in entrys) {
                 // 기존 소스코드
                 var oldOid = entry.OldOid;
@@ -78,33 +87,6 @@ namespace VulnCrawler
                     // 출력
                     if (regs.Count > 0)
                     {
-                        //int deleted = entry.LinesDeleted;
-                        //if (deleted == 0)
-                        //{
-                        //  //  continue;
-                        //}
-                        //Console.BackgroundColor = ConsoleColor.DarkBlue;
-                        //Console.WriteLine($"Old Content: \n{oldContent}");
-                        //Console.ResetColor();
-
-                        //Console.ForegroundColor = ConsoleColor.Blue;
-                        //Console.WriteLine($"status: {entry.Status.ToString()}");
-                        //Console.WriteLine($"added: {entry.LinesAdded.ToString()}, deleted: {entry.LinesDeleted.ToString()}");
-                        //Console.WriteLine($"old path: {entry.OldPath.ToString()}, new path: {entry.Path.ToString()}");
-                        //Console.ResetColor();
-
-
-                        //Console.Write($"CVE: ");
-                        //Console.ForegroundColor = ConsoleColor.Red;
-                        //Console.Write($"{cve}");
-                        //Console.WriteLine("");
-                        //Console.ResetColor();
-                        //Console.ForegroundColor = ConsoleColor.Yellow;
-                        //Console.WriteLine($"Commit Message: {commitMsg}");
-                        //Console.ResetColor();
-                        //Console.BackgroundColor = ConsoleColor.DarkRed;
-                        //Console.WriteLine($"Patched: \n{entry.Patch}");
-                        //Console.ResetColor();
                         /* 패치된 코드들에서 Method로 나누고 크리티컬 변수로 뽑아옴 Dictionary 구조 (키 = 함수명) */
                         var table = self.ExtractGitCriticalMethodTable(entry.Patch);
                         /* 크리티컬 메서드 테이블과 패치 전 파일에서 Process 하고 tuple로 가져옴 */
@@ -112,80 +94,32 @@ namespace VulnCrawler
                         {
                             /* 메서드 이름, 원본 함수 코드, 블록 리스트(크리티컬 포함) */
                             (var methodName, var oriFunc, var blocks) = tuple;
-                            //Console.BackgroundColor = ConsoleColor.DarkRed;
-                            //Console.WriteLine($"메서드 이름 : {methodName}");
-                            //Console.ResetColor();
-                            ////foreach (var block in blocks)
-                            //{
-                            //    /* 크리티컬 블록이 아니면 볼 필요 없으니 넘어감 */
-                            //    if (!block.HasCritical)
-                            //    {
-                            //        // Console.WriteLine("크리티컬 아님");
-                            //        continue;
-                            //    }
-
-
-                            //    if (block.HasCritical)
-                            //    {
-                            //        Console.BackgroundColor = ConsoleColor.DarkMagenta;
-                            //    }
-                            //    else
-                            //    {
-                            //        Console.BackgroundColor = ConsoleColor.DarkGreen;
-                            //    }
-                            //    /* 블록 정보 출력(블록 번호, 블록 소스코드, 블록 추상화 코드, 블록 해쉬값) */
-                            //    Console.WriteLine($"=====block({block.Num}, {block.HasCritical.ToString()})");
-                            //    Console.WriteLine(block.Code);
-                            //    Console.ResetColor();
-                            //    Console.WriteLine($"AbsCode = \n{block.AbsCode}");
-                            //    Console.WriteLine($"MD5 = {block.Hash}");
-
-                            //    /* base64 인코딩(MySQL에 들어갈 수 없는 문자열이 있을 수 있으므로 인코딩) */
-                            //    byte[] funcNameBytes = Encoding.Unicode.GetBytes(methodName);
-                            //    byte[] codeOriBeforeBytes = Encoding.Unicode.GetBytes(oriFunc);
-                            //    byte[] codeAbsBeforeBytes = Encoding.Unicode.GetBytes(block.AbsCode);
-
-                            //    /* VulnDB에 하나의 레코드로 들어가는 하나의 취약점 객체 */
-                            //    VulnRDS.Vuln vuln = new VulnRDS.Vuln()
-                            //    {
-                            //        Cve = cve,
-                            //        BlockHash = block.Hash,
-                            //        LenBlock = block.Code.Length,
-                            //        FuncName = Convert.ToBase64String(funcNameBytes),
-                            //        //CodeOriBefore = Convert.ToBase64String(codeOriBeforeBytes),
-                            //        //CodeAbsBefore = Convert.ToBase64String(codeAbsBeforeBytes),
-                            //        //NumBlock = block.Num,
-                            //    };
-                            //    Console.WriteLine($"Vuln FuncName:{vuln.FuncName}");
-                            /* VulnDB에 추가 */
-                            //VulnRDS.InsertVulnData(vuln);
-                            //}
 
                             if (string.IsNullOrWhiteSpace(oriFunc))
                             {
                                 continue;
                             }
+
+              
                             string abstractCode = self.Abstract(oriFunc, new Dictionary<string, string>(), new Dictionary<string, string>());
 
                             byte[] funcNameBytes = Encoding.Unicode.GetBytes(methodName);
                             byte[] absCodeBytes = Encoding.Unicode.GetBytes(abstractCode);
-                            byte[] commitMsgBytes = Encoding.Unicode.GetBytes(commitMsg);
+                            byte[] commitUrlBytes = Encoding.Unicode.GetBytes(commitUrl);
                             byte[] funcBytes = Encoding.Unicode.GetBytes(oriFunc);
+
+                            string absCodeBase64 = Convert.ToBase64String(absCodeBytes);
+
                             VulnRDS._Vuln vuln = new VulnRDS._Vuln()
                             {
-                                LenFunc = oriFunc.Length,
+                                LenFunc = absCodeBase64.Length,
                                 Cve = cve,
-                                BlockHash =  VulnAbstractCrawler.MD5HashFunc(Convert.ToBase64String(absCodeBytes)),
+                                BlockHash =  VulnAbstractCrawler.MD5HashFunc(absCodeBase64),
                                 FuncName = Convert.ToBase64String(funcNameBytes),
                                 Code = Convert.ToBase64String(funcBytes),
-                                Url = Convert.ToBase64String(commitMsgBytes),
-                                //BlockHash = Convert.ToBase64String(absCodeBytes),
-                                //Cve = cve,
-                                //LenBlock = oriFunc.Length,
-                                //FuncName = Convert.ToBase64String(funcNameBytes),
+                                Url = Convert.ToBase64String(commitUrlBytes),
                             };
-                           // Console.WriteLine(vuln.BlockHash);
-                          //  Console.ReadLine();
+
                             /* VulnDB에 추가 */
                             VulnRDS._InsertVulnData(vuln);
 
@@ -193,8 +127,6 @@ namespace VulnCrawler
                     }
                     else
                     {
-                        //Console.WriteLine("zzz");
-                        //Console.ReadLine();
                         continue;
                     }
 
@@ -203,8 +135,6 @@ namespace VulnCrawler
                 }
                 catch (Exception e)
                 {
-                    //Console.WriteLine(e.ToString());
-                    //Console.ReadLine();
                     continue;
                 }
 
