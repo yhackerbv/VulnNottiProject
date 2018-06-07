@@ -712,18 +712,20 @@ namespace VulnCrawler
                 {
                     string obStr = oldBuilder.ToString();
                     obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
-                    if (!dict.ContainsKey(obStr.Length))
-                    {
-                        dict[obStr.Length] = new HashSet<UserBlock>();
-                    }
                     byte[] obStrBytes = Encoding.Unicode.GetBytes(obStr);
+                    string absObStrBase64 = Convert.ToBase64String(obStrBytes);
 
+                    if (!dict.ContainsKey(absObStrBase64.Length))
+                    {
+                        dict[absObStrBase64.Length] = new HashSet<UserBlock>();
+                    }
+         
                     string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
 
-                    (dict[obStr.Length] as HashSet<UserBlock>).Add(new UserBlock
+                    (dict[absObStrBase64.Length] as HashSet<UserBlock>).Add(new UserBlock
                     {
-                        Hash = MD5HashFunc(Convert.ToBase64String(obStrBytes)),
-                        Len = obStr.Length,
+                        Hash = MD5HashFunc(absObStrBase64),
+                        Len = absObStrBase64.Length,
                         FuncName = funcName,
                     });
                     oldBuilder.Clear();
@@ -856,23 +858,22 @@ namespace VulnCrawler
             {
                 string obStr = oldBuilder.ToString();
                 obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
-
-                if (!dict.ContainsKey(obStr.Length))
-                {
-                    dict[obStr.Length] = new HashSet<UserBlock>();
-                }
                 byte[] obStrBytes = Encoding.Unicode.GetBytes(obStr);
+                string absObStrBase64 = Convert.ToBase64String(obStrBytes);
+
+                if (!dict.ContainsKey(absObStrBase64.Length))
+                {
+                    dict[absObStrBase64.Length] = new HashSet<UserBlock>();
+                }
 
                 string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
 
-
-                (dict[obStr.Length] as HashSet<UserBlock>).Add(new UserBlock
+  
+                (dict[absObStrBase64.Length] as HashSet<UserBlock>).Add(new UserBlock
                 {
-                    Hash = MD5HashFunc(Convert.ToBase64String(obStrBytes)),
-                    Len = obStr.Length,
+                    Hash = MD5HashFunc(absObStrBase64),
+                    Len = absObStrBase64.Length,
                     FuncName = funcName,
-
-
                 });
                 oldBuilder.Clear();
                 found = false;
