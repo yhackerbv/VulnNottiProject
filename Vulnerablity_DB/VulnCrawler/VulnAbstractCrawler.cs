@@ -24,6 +24,28 @@ namespace VulnCrawler
             public IEnumerable<string> CriticalList { get; set; }
 
         }
+
+        public class UserBlock
+        {
+            public int Len { get; set; }
+            public string FuncName { get; set; }
+            public string Hash { get; set; }
+            public string Path { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                var block = obj as UserBlock;
+                return block != null &&
+                       Hash == block.Hash;
+            }
+
+            public override int GetHashCode()
+            {
+                var hashCode = -481433985;
+                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Hash);
+                return hashCode;
+            }
+        }
         protected Regex extractMethodLine;
         protected HashSet<string> ReservedList { get; }
         protected abstract string ReservedFileName { get; }
@@ -121,7 +143,7 @@ namespace VulnCrawler
         /// <returns>함수 문자열</returns>
         protected abstract string GetOriginalFunc(Stream oldStream, string methodName);
 
-        public abstract IDictionary<int, List<string>> CrawlUserCode(StreamReader reader);
+        public abstract IDictionary<int, IEnumerable<UserBlock>> CrawlUserCode(StreamReader reader);
 
         protected abstract IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList);
         /// <summary>

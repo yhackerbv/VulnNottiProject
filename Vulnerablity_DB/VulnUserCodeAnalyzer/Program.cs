@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,10 +14,13 @@ namespace VulnUserCodeAnalyzer
     {
         static void Main(string[] args)
         {
+            var hashDict = new Dictionary<int, HashSet<VulnAbstractCrawler.UserBlock>>();
+
             DirectoryInfo dirInfo = new DirectoryInfo(@"c:\code");
             var codeFiles = dirInfo.EnumerateFiles("*.c", SearchOption.AllDirectories);
-
+            int totalFileCount = codeFiles.Count();
             var crawler = new VulnC();
+            int count = 0;
             foreach (var codeFile in codeFiles)
             {
                 Console.WriteLine(codeFile.FullName);
@@ -27,16 +31,44 @@ namespace VulnUserCodeAnalyzer
 
                     foreach (var item in dict)
                     {
-                        Console.WriteLine($"----{item.Key}->");
+                        if (!hashDict.ContainsKey(item.Key))
+                        {
+                            hashDict[item.Key] = new HashSet<VulnAbstractCrawler.UserBlock>();
+                        }
                         foreach (var hash in item.Value)
                         {
-                            Console.WriteLine(hash);
+                            hash.Path = codeFile.FullName;
+                            hashDict[item.Key].Add(hash);
                         }
                     }
+
+                    count++;
+                    double per = ((double)count / (double)totalFileCount) * 100;
+
+                    Console.Clear();
+                    Console.WriteLine($"{count} / {totalFileCount} :: {per.ToString("#0.0")}%, 개체 수 : {hashDict.Count}");
+
+                    //if (count > 20)
+                    //{
+                    //    break;
+                    //}
+                }
+
+
+            }
+
+            foreach (var set in hashDict)
+            {
+                Console.WriteLine($"-----key:{set.Key}");
+                foreach (var hash in set.Value)
+                {
+                    Console.WriteLine($"{hash.FuncName}, {hash.Hash}, {hash.Len}, {hash.Path}");
                 }
             }
 
 
+
         }
     }
+
 }

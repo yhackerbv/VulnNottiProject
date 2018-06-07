@@ -533,7 +533,7 @@ namespace VulnCrawler
 
             var removes = Regex.Split(blockCode, Environment.NewLine, RegexOptions.Multiline);
             StringBuilder builder = new StringBuilder();
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
+           // Console.ForegroundColor = ConsoleColor.DarkYellow;
             foreach (var item in removes)
             {
                 if (string.IsNullOrWhiteSpace(item))
@@ -543,8 +543,8 @@ namespace VulnCrawler
                 string rm = regex1.Replace(item, "");
                 builder.Append(rm);
             }
-            Console.WriteLine(builder.ToString());
-            Console.ResetColor();
+           // Console.WriteLine(builder.ToString());
+           // Console.ResetColor();
             string line = builder.ToString();
 
             var varList = ExtractMethodVariantList(line, skipDefine: false);
@@ -642,9 +642,11 @@ namespace VulnCrawler
             return temp;
         }
 
-        public override IDictionary<int, List<string>> CrawlUserCode(StreamReader reader)
+        public override IDictionary<int, IEnumerable<UserBlock>> CrawlUserCode(StreamReader reader)
         {
-            var dict = new Dictionary<int, List<string>>();
+        
+
+            var dict = new Dictionary<int, IEnumerable<UserBlock>>();
             StringBuilder oldBuilder = new StringBuilder();
 
             bool found = false;
@@ -662,33 +664,74 @@ namespace VulnCrawler
 
             bool found3 = false;
 
-            
+            bool com = false;
+
             while (!reader.EndOfStream)
             {
+                
                 string line = reader.ReadLine();
-                Console.WriteLine(line);
+                string trim = line.Trim();
+                if (commentLine)
+                {
+                    // 혹시 범위 주석이 끝났는지 체크
+                    if (regex1.IsMatch(trim))
+                    {
+                        commentLine = false;
+                        trim = regex1.Split(trim)[1];
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                // /* ~ 패턴
+                if (regex3.IsMatch(trim))
+                {
+                    // /* ~ */ 패턴이 아닌 경우
+                    if (!regex4.IsMatch(trim))
+                    {
+                        commentLine = true;
+                    }
+                    trim = Regex.Split(trim, "/*")[0];
+                }
+                if (com)
+                {
+                    if (trim.StartsWith("*"))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        com = false;
+                    }
+                }
                 // 메서드를 찾은 경우
                 if (found3)
                 {
                     string obStr = oldBuilder.ToString();
                     obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
-
                     if (!dict.ContainsKey(obStr.Length))
                     {
-                        dict[obStr.Length] = new List<string>();
+                        dict[obStr.Length] = new HashSet<UserBlock>();
                     }
-                    dict[obStr.Length].Add(MD5HashFunc(obStr));
+                    string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
+
+                    (dict[obStr.Length] as HashSet<UserBlock>).Add(new UserBlock
+                    {
+                        Hash = MD5HashFunc(obStr),
+                        Len = obStr.Length,
+                        FuncName = funcName,
+                    });
                     oldBuilder.Clear();
                     found = false;
                     found2 = false;
                     found3 = false;
                     bracketCount = -1;
                     commentLine = false;
-
                 }
                 if (found)
                 {
-                    string trim = line.Trim();
                     // 범위 주석 진행되고 있으면 넘어감
                     if (trim.StartsWith("#"))
                     {
@@ -718,7 +761,6 @@ namespace VulnCrawler
                             commentLine = true;
                         }
                         trim = Regex.Split(trim, "/*")[0];
-
                     }
                     // 비어있는 경우 넘어감
                     if (string.IsNullOrWhiteSpace(trim))
@@ -732,15 +774,10 @@ namespace VulnCrawler
                     // 메서드 시작 괄호 찾은 경우
                     if (found2)
                     {
-
                         oldBuilder.AppendLine(line);
                         // 괄호가 모두 닫혔으니 종료
                         if (bracketCount < 0)
                         {
-                            if (reader.EndOfStream)
-                            {
-                                Console.WriteLine("파일끝");
-                            }
                             found3 = true;
                             continue;
                         }
@@ -758,9 +795,6 @@ namespace VulnCrawler
                             //아직 { 괄호를 못찾았는데 );를 만났다면 메서드 선언 부분이니 넘어감
                             if (trim.EndsWith(");"))
                             {
-                                Console.WriteLine("-------");
-                                Console.WriteLine(trim);
-                                Console.WriteLine("-----");
                                 found = false;
                                 oldBuilder.Clear();
                                 continue;
@@ -782,7 +816,7 @@ namespace VulnCrawler
                     // 메서드 찾았는지 확인
                     if (Regex.IsMatch(line, RegexFuncPattern))
                     {
-                        string trim = line.Trim();
+
                         // 주석으로 시작했다면 넘어감
                         if (trim.StartsWith("//"))
                         {
@@ -791,6 +825,7 @@ namespace VulnCrawler
 
                         if (trim.StartsWith("/*"))
                         {
+                            com = true;
                             continue;
                         }
 
@@ -821,9 +856,19 @@ namespace VulnCrawler
 
                 if (!dict.ContainsKey(obStr.Length))
                 {
-                    dict[obStr.Length] = new List<string>();
+                    dict[obStr.Length] = new HashSet<UserBlock>();
                 }
-                dict[obStr.Length].Add(MD5HashFunc(obStr));
+                string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
+
+
+                (dict[obStr.Length] as HashSet<UserBlock>).Add(new UserBlock
+                {
+                    Hash = MD5HashFunc(obStr),
+                    Len = obStr.Length,
+                    FuncName = funcName,
+
+
+                });
                 oldBuilder.Clear();
                 found = false;
                 found2 = false;
@@ -831,6 +876,7 @@ namespace VulnCrawler
                 bracketCount = -1;
                 commentLine = false;
 
+                
             }
 
 
