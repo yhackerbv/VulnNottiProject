@@ -139,7 +139,9 @@ namespace VulnCrawler
                 //콘솔출력용
                 sql = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) " +
                        $"VALUES({last_vulnId}, {vuln.Cve}, '{vuln.FuncName}', '{vuln.LenFunc}', {vuln.Code},'{vuln.BlockHash}', '{vuln.Url}')";
-                Console.WriteLine(sql);
+                //Console.WriteLine(sql);
+                //Console.ReadLine();
+                
             }
             catch (Exception e)
             {
@@ -150,7 +152,7 @@ namespace VulnCrawler
                     Connect(Account, DbName);
                     goto Retry;
                 }
-                Console.ReadLine();
+                //Console.ReadLine();
             }
         }
         public static void InsertUserData(User user)

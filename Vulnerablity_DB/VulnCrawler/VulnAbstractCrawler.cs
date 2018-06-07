@@ -65,7 +65,11 @@ namespace VulnCrawler
         }
         // 소멸자
         ~VulnAbstractCrawler() {
-            Repository?.Dispose();
+            try
+            {
+                Repository?.Dispose();
+            }
+            catch { }
         }
 
         private void LoadReservedList()
@@ -223,7 +227,7 @@ namespace VulnCrawler
                             // 괄호가 모두 닫혔으니 종료
                             if (bracketCount < 0)
                             {
-                                Console.WriteLine("괄호끝");
+                               // Console.WriteLine("괄호끝");
                                 break;
                             }
                           //  oldBuilder.AppendLine(line);
@@ -271,34 +275,36 @@ namespace VulnCrawler
                 string md5 = string.Empty;
                 if (item.Value.Count() != 0)
                 {
-                    Console.WriteLine("크리티컬 변수 목록");
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    foreach (var c in item.Value)
-                    {
-                        Console.WriteLine(c);
-                    }
-                    Console.ResetColor();
-                    Console.WriteLine("-------------------");
+                    //Console.WriteLine("크리티컬 변수 목록");
+                    //Console.ForegroundColor = ConsoleColor.Cyan;
+                    //foreach (var c in item.Value)
+                    //{
+                    //    Console.WriteLine(c);
+                    //}
+                    //Console.ResetColor();
+                    //Console.WriteLine("-------------------");
                     // 크리티컬 블록 추출
-                    var blocks = GetCriticalBlocks(func, item.Value).ToList();
-                    if (blocks == null)
-                    {
-                        continue;
-                    }
-                    foreach (var block in blocks)
-                    {
+                    var blocks = new List<Block>();
+                    //var blocks = GetCriticalBlocks(func, item.Value).ToList();
+                    //if (blocks == null)
+                    //{
+                    //    continue;
+                    //}
+                    //foreach (var block in blocks)
+                    //{
                         
-                        block.CriticalList = item.Value;
-                        /* 추상화 및 정규화 */
-                        block.AbsCode = Abstract(block.Code, varTable, methodTable);
-                        block.Hash = MD5HashFunc(block.AbsCode);
+                    //    block.CriticalList = item.Value;
+                    //    /* 추상화 및 정규화 */
+                    //    block.AbsCode = Abstract(block.Code, varTable, methodTable);
+                    //    block.Hash = MD5HashFunc(block.AbsCode);
 
-                    }
+                    //}
                     /* 추상화 변환 테이블 출력 */
-                    foreach (var var in varTable)
-                    {
-                        Console.WriteLine($"{var.Key}, {var.Value}");
-                    }
+                    //foreach (var var in varTable)
+                    //{
+                    //    Console.WriteLine($"{var.Key}, {var.Value}");
+                    //}
+
                     yield return (methodName, func, blocks);
                 }
                 
@@ -644,7 +650,7 @@ namespace VulnCrawler
         /// </summary>
         /// <param name="str">INPUT 문자열</param>
         /// <returns>결과 문자열</returns>
-        protected static string MD5HashFunc(string str) {
+        public static string MD5HashFunc(string str) {
             StringBuilder MD5Str = new StringBuilder();
             byte[] byteArr = Encoding.ASCII.GetBytes(str);
             byte[] resultArr = (new MD5CryptoServiceProvider()).ComputeHash(byteArr);

@@ -21,10 +21,7 @@ namespace VulnCrawler
             #region MySql 연결
             //SecureString s_key = GetConsoleSecurePassword();
             //Console.Clear();
-            //string key = SecureStringToString(s_key);
-            //AWS.account.Id = "yhackerbv";
-            //AWS.account.Pw = "guswhd12";
-            //AWS.account.Endpoint = "vulndb.cby38wfppa7l.us-east-2.rds.amazonaws.com";
+            //string key = SecureStringToString(s_key)
             //AWS.SaveAccount();
             //AES aes = new AES();
 
@@ -81,7 +78,7 @@ namespace VulnCrawler
                 /* 폴더 중에 linux가 있으면 잠깐 넘어감 (너무 커서 테스트 힘듦) */
                 if (directory.Contains("linux"))
                 {
-                    continue;
+                  //  continue;
                 }
                 // 템플릿 패턴화 T : VulnAbstractCrawler
                 VulnWorker.Run<VulnC>(directory);

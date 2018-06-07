@@ -26,7 +26,8 @@ namespace VulnCrawler
         /// <param name="patchCode">패치 코드</param>
         /// <returns></returns>
         public override MatchCollection GetMatches(string patchCode) {
-            var regs = Regex.Matches(patchCode, RegexFuncPattern);
+            var funcPattern = $@"(?<{MethodName}>(unsigned|static)?( const )? [\w]+ [\w]+\(([\w \*\,\t\n])*[\)\,])";
+            var regs = Regex.Matches(patchCode, funcPattern);
             return regs;
         }
         /// <summary>
@@ -82,7 +83,7 @@ namespace VulnCrawler
                     {
                         continue;
                     }
-                    Console.WriteLine(line);
+                   // Console.WriteLine(line);
                     builder.AppendLine(line);
                     continue;
                 }
