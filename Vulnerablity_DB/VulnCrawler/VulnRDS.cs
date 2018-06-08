@@ -40,6 +40,18 @@ namespace VulnCrawler
             public string Code { get; set; } = "NULL"; /* 취약점 소스 코드 */
             public string BlockHash { get; set; } = "NULL";/* 취약점 블록 해시 값 */
             public string Url { get; set; } = "NULL"; /* 취약점 URL */
+
+            public override bool Equals(object obj)
+            {
+                var vuln = obj as _Vuln;
+                return vuln != null &&
+                       BlockHash == vuln.BlockHash;
+            }
+
+            public override int GetHashCode()
+            {
+                return 802558182 + EqualityComparer<string>.Default.GetHashCode(BlockHash);
+            }
         }
         //connect
         public static void Connect(AWS.Account account, string dbName)
@@ -105,7 +117,6 @@ namespace VulnCrawler
         {
             String sql = string.Empty;
             MySqlCommand cmd = null;
-
             // vulnId setting  (마지막 vulnId +1)
             int last_vulnId = 1;
             try
@@ -124,10 +135,12 @@ namespace VulnCrawler
             //DB insert
             try
             {
-                cmd = new MySqlCommand();
-                cmd.Connection = Conn;
-                //db에 추가
-                cmd.CommandText = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) VALUES(@vulnId, @cve, @funcName, @lenFunc, @code, @blockHash, @url)";
+                cmd = new MySqlCommand
+                {
+                    Connection = Conn,
+                    //db에 추가
+                    CommandText = "INSERT INTO vuln_Info(vulnId, cve, funcName, lenFunc, code, blockHash, url) VALUES(@vulnId, @cve, @funcName, @lenFunc, @code, @blockHash, @url)"
+                };
                 cmd.Parameters.AddWithValue("@vulnId", last_vulnId);
                 cmd.Parameters.AddWithValue("@cve", $"{vuln.Cve}");
                 cmd.Parameters.AddWithValue("@funcName", $"{vuln.FuncName}");

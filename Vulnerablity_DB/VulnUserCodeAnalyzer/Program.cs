@@ -60,25 +60,19 @@ namespace VulnUserCodeAnalyzer
                 Console.WriteLine("연결 실패");
                 return;
             }
-
             var hashDict = new Dictionary<int, HashSet<VulnAbstractCrawler.UserBlock>>();
-
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             DirectoryInfo dirInfo = new DirectoryInfo(@"c:\code");
             var codeFiles = dirInfo.EnumerateFiles("*.c", SearchOption.AllDirectories);
             int totalFileCount = codeFiles.Count();
-
             int count = 0;
             foreach (var codeFile in codeFiles)
             {
-                
                 Console.WriteLine(codeFile.FullName);
                 using (var reader = codeFile.OpenText())
                 {
-
                     var dict = crawler.CrawlUserCode(reader);
-
                     foreach (var item in dict)
                     {
                         if (!hashDict.ContainsKey(item.Key))
@@ -92,31 +86,38 @@ namespace VulnUserCodeAnalyzer
                             filter.Add(hash.Hash);
                         }
                     }
-
                     count++;
                     double per = ((double)count / (double)totalFileCount) * 100;
-
                     Console.Clear();
                     Console.WriteLine($"{count} / {totalFileCount} :: {per.ToString("#0.0")}%, 개체 수 : {hashDict.Count}");
-
                     if (count > 100)
                     {
                         break;
                     }
                 }
-
-
             }
-            
             var findBlocks = new Queue<VulnAbstractCrawler.UserBlock>();
-
+            var vulnDict = new Dictionary<string, IEnumerable<VulnRDS._Vuln>>();
             foreach (var set in hashDict)
             {
-                Console.WriteLine($"-----key:{set.Key}");
-                var vulnList = VulnRDS.SelectVulnbyLen(set.Key);
-                foreach (var vuln in vulnList)
+                var cveList = VulnRDS.SelectVulnbyLen(set.Key).Select(v => v.Cve).Distinct();
+                foreach (var cve in cveList)
                 {
-                //    Console.WriteLine(vuln.BlockHash);
+                    if (!vulnDict.ContainsKey(cve))
+                    {
+                        vulnDict[cve] = new HashSet<VulnRDS._Vuln>();
+                        // SQL CVE 목록 가져와야 함
+                        // 가져와서 각 CVE 마다 vulnDict에 추가
+                    }
+                }
+            }
+
+            foreach (var vulnSet in vulnDict)
+            {
+                Console.WriteLine($"-----cve:{vulnSet.Key}");
+                bool match = false;
+                foreach (var vuln in vulnSet.Value)
+                {
                     if (filter.Contains(vuln.BlockHash))
                     {
                         Console.WriteLine($"필터 확인 : {vuln.BlockHash}");
@@ -129,16 +130,20 @@ namespace VulnUserCodeAnalyzer
                                 continue;
                             }
                             Console.WriteLine($"CVE:{vuln.Cve}, {userBlock.FuncName}, 블록 확인 : DB : {vuln.BlockHash}, User : {userBlock.Hash}");
+                            match = true;
                             findBlocks.Enqueue(userBlock);
                         }
                     }
-
+                    else
+                    {
+                        match = false;
+                        break;
+                    }
                 }
-                //foreach (var hash in set.Value)
-                //{
-
-                //    Console.WriteLine($"{hash.FuncName}, {hash.Hash}, {hash.Len}, {hash.Path}");
-                //}
+                if (match)
+                {
+                    Console.WriteLine($"CVE 찾음 {vulnSet.Key}");
+                }
             }
 
             stopwatch.Stop();
