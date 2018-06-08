@@ -414,14 +414,16 @@ namespace VulnCrawler
             //vuln에 입력
             foreach (System.Data.DataRow row in ds.Tables[0].Rows)
             {
-                _Vuln vuln = new _Vuln();
-                vuln.VulnId = Convert.ToInt32(row["vulnId"]);
-                vuln.Cve = Convert.ToString(row["cve"]);
-                vuln.FuncName = Convert.ToString(row["funcName"]);
-                vuln.LenFunc = Convert.ToInt32(row["lenFunc"]);
-                vuln.Code = Convert.ToString(row["code"]);
-                vuln.BlockHash = Convert.ToString(row["blockHash"]);
-                vuln.Url = Convert.ToString(row["url"]);
+                _Vuln vuln = new _Vuln
+                {
+                    VulnId = Convert.ToInt32(row["vulnId"]),
+                    Cve = Convert.ToString(row["cve"]),
+                    FuncName = Convert.ToString(row["funcName"]),
+                    LenFunc = Convert.ToInt32(row["lenFunc"]),
+                    Code = Convert.ToString(row["code"]),
+                    BlockHash = Convert.ToString(row["blockHash"]),
+                    Url = Convert.ToString(row["url"])
+                };
                 yield return vuln;
                 //list.Add(vuln);
             }
