@@ -129,9 +129,7 @@ namespace VulnCrawler
             {
                 last_vulnId = 1;
             }
-
             Retry:
-
             //DB insert
             try
             {
@@ -401,9 +399,9 @@ namespace VulnCrawler
                 Console.ReadLine();
             }
         }
-        public static List<_Vuln> SelectVulnbyLen(int _lenFunc)
+        public static IEnumerable<_Vuln> SelectVulnbyLen(int _lenFunc)
         {
-            var list = new List<_Vuln>();
+           // var list = new List<_Vuln>();
             String sql = string.Empty;
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = Conn;
@@ -424,10 +422,11 @@ namespace VulnCrawler
                 vuln.Code = Convert.ToString(row["code"]);
                 vuln.BlockHash = Convert.ToString(row["blockHash"]);
                 vuln.Url = Convert.ToString(row["url"]);
-                list.Add(vuln);
+                yield return vuln;
+                //list.Add(vuln);
             }
             //해당 list 반환
-            return list;
+           // return list;
         }
 
     }
