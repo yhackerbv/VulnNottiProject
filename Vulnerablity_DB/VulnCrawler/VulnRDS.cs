@@ -401,14 +401,13 @@ namespace VulnCrawler
         }
         public static IEnumerable<_Vuln> SelectVulnbyLen(int _lenFunc)
         {
-           // var list = new List<_Vuln>();
             String sql = string.Empty;
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = Conn;
             cmd.CommandText = "SELECT * FROM vuln_Info where lenFunc=" + _lenFunc;
 
             System.Data.DataSet ds = new System.Data.DataSet();
-            MySqlDataAdapter da = new MySqlDataAdapter("SELECT * FROM vuln_Info where lenFunc=" + _lenFunc, Conn);
+            MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
             da.Fill(ds);
 
             //vuln에 입력
@@ -425,11 +424,33 @@ namespace VulnCrawler
                     Url = Convert.ToString(row["url"])
                 };
                 yield return vuln;
-                //list.Add(vuln);
             }
-            //해당 list 반환
-           // return list;
         }
+        public static IEnumerable<_Vuln> SelectVulnbyCve(string _cve)
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = $"SELECT * FROM vuln_Info where cve='" + _cve + $"'";
 
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
+            da.Fill(ds);
+            //vuln에 입력
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                _Vuln vuln = new _Vuln
+                {
+                    VulnId = Convert.ToInt32(row["vulnId"]),
+                    Cve = Convert.ToString(row["cve"]),
+                    FuncName = Convert.ToString(row["funcName"]),
+                    LenFunc = Convert.ToInt32(row["lenFunc"]),
+                    Code = Convert.ToString(row["code"]),
+                    BlockHash = Convert.ToString(row["blockHash"]),
+                    Url = Convert.ToString(row["url"])
+                };
+                yield return vuln;
+            }
+        }
     }
 }
