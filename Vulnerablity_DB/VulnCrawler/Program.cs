@@ -65,6 +65,10 @@ namespace VulnCrawler
 
         /* 메인 동작 함수 */
         public static void Run() {
+
+
+
+
             // Repository 폴더들이 있는 주소를 지정하면 하위 폴더 목록을 가져옴(Repository 목록)
             Regex.CacheSize = 50;
 
@@ -80,17 +84,46 @@ namespace VulnCrawler
             // Repository 목록 만큼 반복함.
             foreach (var directory in directorys) {
                 /* 폴더 중에 linux가 있으면 잠깐 넘어감 (너무 커서 테스트 힘듦) */
-                if (directory.Contains("linux"))
+                if (directory.Contains("~"))
                 {
-                  //  continue;
+                    continue;
                 }
+                //var crawler = new VulnC();
+                //crawler.Init(directory);
+
+                //Tree commitTree1 = crawler.Repository.Lookup<Commit>("e589db7a6a9c8f1557007f2cc765ee28ad7a1edd").Tree;
+                ////Tree parentTree1 = crawler.Repository.Lookup<Commit>("344ba37bdc299660e1b1693b6999e5fe116893e1").Tree;
+
+                //Commit commit = crawler.Repository.Lookup<Commit>("e589db7a6a9c8f1557007f2cc765ee28ad7a1edd");
+
+                //foreach (var parent in commit.Parents)
+                //{
+                //    Console.WriteLine($"Parent ID:{parent.Sha}");
+                //    Tree commitTree = commit.Tree;
+                //    Tree parentTree = parent.Tree;
+                //    var patch = crawler.Repository.Diff.Compare<Patch>(commitTree, parentTree.);
+                //    foreach (var item in patch.Where(p => p.OldPath.EndsWith(".c")))
+                //    {
+
+                //        Console.WriteLine(item.Status);
+                //        Console.WriteLine(item.Path);
+                //        Console.WriteLine(item.Patch);
+                //    }
+                //    Console.ReadLine();
+
+                //}
+            
+
+                ////Console.WriteLine(patch.Content);
+                //Console.ReadLine();
+
                 // 템플릿 패턴화 T : VulnAbstractCrawler
                 VulnWorker.Run<VulnC>(directory);
             }
             stopwatch.Stop();
-            var hours = stopwatch.Elapsed.TotalHours;
-            var minutes = stopwatch.Elapsed.TotalMinutes;
-            var seconds = stopwatch.Elapsed.TotalSeconds;
+            var hours = stopwatch.Elapsed.Hours;
+            var minutes = stopwatch.Elapsed.Minutes;
+            var seconds = stopwatch.Elapsed.Seconds;
 
             Console.WriteLine($"경과 시간 {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
 

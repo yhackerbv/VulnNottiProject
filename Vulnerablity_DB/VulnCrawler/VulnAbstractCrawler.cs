@@ -131,14 +131,15 @@ namespace VulnCrawler
         /// <summary>
         /// 커밋에서 검색할 정규식 문자열
         /// </summary>
-        public string SearchCommitPattern => @"CVE[ -]\d{4}[ -]\d{4}";
+        public string SearchCommitPattern => @"CVE[ -](\d{4})[ -](\d{4,})";
         /// <summary>
         /// 패치 코드에서 함수 찾을 정규식 패턴 문자열
         /// </summary>
         protected abstract string RegexFuncPattern { get; }
+        protected abstract string UserRegexFuncPattern { get; }
         protected abstract string Extension { get; }
         public virtual IEnumerable<PatchEntryChanges> GetPatchEntryChanges(Patch patch) {
-            return patch.Where(e => e.Path.EndsWith(Extension)).ToList();
+            return patch.Where(e => e.Path.EndsWith(Extension) && e.Status == ChangeKind.Modified).ToList();
         }
         /// <summary>
         /// 정규식을 이용하여 @@ -\d,\d +\d,\d @@ MethodName(): 이런 패턴을 찾고
@@ -158,107 +159,10 @@ namespace VulnCrawler
         public abstract IDictionary<int, IEnumerable<UserBlock>> CrawlUserCode(StreamReader reader);
 
         protected abstract IList<Block> GetCriticalBlocks(string srcCode, IEnumerable<string> criticalList);
-        /// <summary>
-        /// 성능 개선을 위한
-        /// 코드 라인 위치 기반 취약 원본 함수 추출 테스트용 함수 곧 삭제 예정
-        /// </summary>
-        public string GetOriginalFuncTest(Stream oldStream, string methodName, int start)
-        {
-            StringBuilder oldBuilder = new StringBuilder();
-            
-            using (var reader = new StreamReader(oldStream))
-            {
-                bool found = false;
-                bool found2 = false;
-                bool commentLine = false;
-                int bracketCount = -1;
-                string stringPattern = @"[""].*[""]";
-                string commentPattern = @"\/\*.+\*\/";
-                string commentPattern2 = @"\/\*";
-                string commentPattern3 = @"\*\/";
-                int readCount = 0;
-                Queue<string> tempQ = new Queue<string>();
-                while (!reader.EndOfStream)
-                {
-                    string line = reader.ReadLine();
-                    if (readCount++ < start)
-                    {
-                        tempQ.Enqueue(line);
-                        continue;
-                    }
-                    Stack<string> tempStack = new Stack<string>();
-                    while (tempQ.Count > 0)
-                    {
-                        string s = tempQ.Dequeue();
-                        tempStack.Push(s);
-                        string method = Regex.Escape(methodName);
-                        if (Regex.Match(s, $"{method}").Success)
-                        {
-                            break;
-                        }
-                    }
-                    while (tempStack.Count > 0)
-                    {
-                        string s = tempStack.Pop();
-                        string trim = s.Trim();
-                        if (commentLine)
-                        {
-                            if (Regex.IsMatch(trim, commentPattern3))
-                            {
-                                commentLine = false;
-                                trim = Regex.Split(trim, commentPattern3)[1];
-                            }
-                            continue;
-                        }
-                        string removeString = Regex.Replace(trim, stringPattern, "");
-                        // /* ~ 패턴
-                        if (Regex.IsMatch(trim, commentPattern2))
-                        {
-                            // /* ~ */ 패턴이 아닌 경우
-                            if (!Regex.IsMatch(trim, commentPattern))
-                            {
-                                commentLine = true;
-                            }
-                            trim = Regex.Split(trim, "/*")[0];
-                        }
-                        if (string.IsNullOrWhiteSpace(trim))
-                        {
-                            continue;
-                        }
-                        int openBracketCount = removeString.Count(c => c == '{');
-                        int closeBracketCount = removeString.Count(c => c == '}');
-                        int subtract = openBracketCount - closeBracketCount;
-                        bracketCount += subtract;
-                        // 메서드 시작 괄호 찾은 경우
-                        if (found2)
-                        {
-                            // 괄호가 모두 닫혔으니 종료
-                            if (bracketCount < 0)
-                            {
-                               // Console.WriteLine("괄호끝");
-                                break;
-                            }
-                          //  oldBuilder.AppendLine(line);
-                        }
-                        else
-                        {
-                            if (openBracketCount > 0)
-                            {
-                                found2 = true;
-                            }
 
-                        }
-                        oldBuilder.AppendLine(s);
-                    }
-                }
-            }
-            Console.WriteLine("찾음");
-            Console.WriteLine(oldBuilder.ToString());
-            Console.ReadLine();
-
-            return oldBuilder.ToString();
-        }
         public abstract IDictionary<string, IEnumerable<string>> ExtractGitCriticalMethodTable(string srcCode);
+
+        public abstract IDictionary<string, string> CrawlCode(StreamReader reader);
 
         public abstract string Abstract(string blockCode, IDictionary<string, string> dict, IDictionary<string, string> methodDict);
         /// <summary>
@@ -268,54 +172,42 @@ namespace VulnCrawler
         /// <param name="table">크리티컬 메서드 테이블(Key: 메서드 이름, Value: 변수 리스트)</param>
         /// <returns></returns>
         public virtual IEnumerable<(string methodName, string oriFunc, IList<Block> blocks)> Process(Blob oldBlob, IDictionary<string, IEnumerable<string>> table) {
-            foreach (var item in table)
+
+            // 패치 전 원본 파일 스트림
+            Stream oldStream = oldBlob.GetContentStream();
+            using (var reader = new StreamReader(oldStream))
             {
-                var methodTable = new Dictionary<string, string>();
-                var varTable = new Dictionary<string, string>();
-                // 메서드 이름
-                string methodName = item.Key;
-                // 패치 전 원본 파일 스트림
-                Stream oldStream = oldBlob.GetContentStream();
-                // 패치 전 원본 함수 구하고
-                string func = GetOriginalFunc(oldStream, methodName);
-                
-                string bs = string.Empty;
-                string md5 = string.Empty;
-                if (item.Value.Count() != 0)
+                var dict = CrawlCode(reader);
+
+                foreach (var item in table)
                 {
-                    //Console.WriteLine("크리티컬 변수 목록");
-                    //Console.ForegroundColor = ConsoleColor.Cyan;
-                    //foreach (var c in item.Value)
-                    //{
-                    //    Console.WriteLine(c);
-                    //}
-                    //Console.ResetColor();
-                    //Console.WriteLine("-------------------");
+                    var methodTable = new Dictionary<string, string>();
+                    var varTable = new Dictionary<string, string>();
+                    // 메서드 이름
+                    string methodName = item.Key;
+
+                    // 패치 전 원본 함수 구하고
+                    string func = string.Empty;
+
+
+                    foreach (var pair in dict)
+                    {
+                        if (pair.Key.Contains(methodName))
+                        {
+                            func = pair.Value;
+                            break;
+                        }
+                    }
+
+
+
+
                     // 크리티컬 블록 추출
                     var blocks = new List<Block>();
-                    //var blocks = GetCriticalBlocks(func, item.Value).ToList();
-                    //if (blocks == null)
-                    //{
-                    //    continue;
-                    //}
-                    //foreach (var block in blocks)
-                    //{
-                        
-                    //    block.CriticalList = item.Value;
-                    //    /* 추상화 및 정규화 */
-                    //    block.AbsCode = Abstract(block.Code, varTable, methodTable);
-                    //    block.Hash = MD5HashFunc(block.AbsCode);
-
-                    //}
-                    /* 추상화 변환 테이블 출력 */
-                    //foreach (var var in varTable)
-                    //{
-                    //    Console.WriteLine($"{var.Key}, {var.Value}");
-                    //}
-
                     yield return (methodName, func, blocks);
+                  
+
                 }
-                
             }
         }
         /// <summary>
@@ -349,7 +241,7 @@ namespace VulnCrawler
             var match = Regex.Match(msg, SearchCommitPattern, RegexOptions.IgnoreCase);
 
             if (match.Success) {
-                return match.Value;
+                return $"CVE-{match.Groups[1].Value}-{match.Groups[2].Value}";
             }
             return string.Empty;
         }
