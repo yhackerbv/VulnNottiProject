@@ -18,14 +18,14 @@ from django.contrib import admin
 from django.contrib.auth import views
 from VulnNotti.views import *
 from django.conf import settings
-
+from myapp.views import *
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', HomeView.as_view(), name='home'),
     url(r'^home/', HomeView.as_view(), name='home'),
     url(r'^myapp/', include('myapp.urls', namespace='myapp')),
-
+    url(r'^myapp/static', StaticView.as_view(), name='static'),
     url(r'^edit/', EditView.as_view(), name='edit'),
 
     url(r'^accounts/', include('django.contrib.auth.urls')),

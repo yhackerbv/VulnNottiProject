@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.5.0/styles/vs2015.min.css">
     <script src="//cdn.jsdelivr.net/highlight.js/9.5.0/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+
+
   </head>
 
 
@@ -62,14 +64,19 @@
     <!-- Portfolio Grid Section -->
 
     <!-- <section class="portfolio" id="portfolio"> -->
-    <div class="col-md-6 col-lg-6" style="float: left;">
+    <div class="col-lg-4" style="float: left;">
       <div class="container">
-        <canvas id="barChart" width="700" height="200"></canvas>
+        <canvas id="barChart" width="700" height="400"></canvas>
       </div>
     </div>
-    <div class="col-md-6 col-lg-6" style="float: right;">
+    <div class="col-lg-4" style="float: right;">
       <div class="container">
-        <canvas id="pieChart" width="700" height="200"></canvas>
+        <canvas id="barChart2" width="700" height="400"></canvas>
+      </div>
+    </div>
+    <div class="col-lg-4" style="float: right;">
+      <div class="container">
+        <canvas id="pieChart" width="600" height="300"></canvas>
       </div>
     </div>
 
@@ -98,24 +105,17 @@
               <th>CVE</th>
               <th>내용</th>
               <th>이름</th>
-              <th>번호</th>
-              <th>제목</th>
-              <th>이름</th>
-              <th>CVE</th>
-              <th>내용</th>
+
             </tr>
             {% for object in object_list %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td>{{ object.Language }}</td>
-              <td>{{ object.Length }}</td>
-              <td>{{ object.PreviousFunc }}</td>
-              <td>{{ object.InputDate }}</td>
-              <td>{{ object.Hash }}</td>
-              <td>{{ forloop.counter }}</td>
-              <td>{{ object.Language }}</td>
-              <td>{{ object.Length }}</td>
-              <td>{{ object.PreviousFunc }}</td>
+              <td>{{ object.vulnId }}</td>
+              <td>{{ object.lenBlock }}</td>
+              <td>{{ object.cve }}</td>
+              <td>{{ object.funcName }}</td>
+              <td>{{ object.numBlock }}</td>
+
 
               <td id="modal_{{ forloop.counter }}">
                 <a class="portfolio-item d-block mx-auto" href="#portfolio-modal-{{ forloop.counter }}">
@@ -126,6 +126,12 @@
             {% endfor %}
         </table>
     </div>
+    <div style="text-align: center;">
+      <button id="prev" class="btn btn-primary" style="background-color: #FF0066; border: #FF0066;"><< Prev</button>
+      <button id="next" class="btn btn-primary" style="margin-left: 200px; background-color: #FF0066; border: #FF0066;">Next >></button>
+    </div>
+    &nbsp;
+    &nbsp;
 
     {% for object in object_list %}
     <div class="portfolio-modal mfp-hide" id="portfolio-modal-{{ forloop.counter }}">
@@ -139,41 +145,14 @@
           <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">previous sourcecode</h2>
           <hr class="star-dark mb-5">
           <pre><code>
+            <!-- #include <iostream>;
             using namespace std;
 
             int main()
             {
-                int rows;
-
-                cout << "Enter number of rows: ";
-                cin >> rows;
-
-                for(int i = 1; i <= rows; ++i)
-                {
-                    for(int j = 1; j <= i; ++j)
-                    {
-                        cout << j << " ";
-                    }
-                    cout << "\n";
-                }
-
-                char input, alphabet = 'A';
-
-                cout << "Enter the uppercase character you want to print in the last row: ";
-                cin >> input;
-
-                for(int i = 1; i <= (input-'A'+1); ++i)
-                {
-                    for(int j = 1; j <= i; ++j)
-                    {
-                        cout << alphabet << " ";
-                    }
-                    ++alphabet;
-
-                    cout << endl;
-                }
                 return 0;
-            }
+
+            } -->
           </code></pre>
         </div>
         <!--  right side  -->
@@ -181,41 +160,7 @@
           <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">modified sourcecode</h2>
           <hr class="star-dark mb-5">
           <pre><code>
-            using namespace std;
-
-            int main()
-            {
-                int rows;
-
-                cout << "Enter number of rows: ";
-                cin >> rows;
-
-                for(int i = 1; i <= rows; ++i)
-                {
-                    for(int j = 1; j <= i; ++j)
-                    {
-                        cout << j << " ";
-                    }
-                    cout << "\n";
-                }
-
-                char input, alphabet = 'A';
-
-                cout << "Enter the uppercase character you want to print in the last row: ";
-                cin >> input;
-
-                for(int i = 1; i <= (input-'A'+1); ++i)
-                {
-                    for(int j = 1; j <= i; ++j)
-                    {
-                        cout << alphabet << " ";
-                    }
-                    ++alphabet;
-
-                    cout << endl;
-                }
-                return 0;
-            }
+            {{ object.codeOriBefore }}
           </code></pre>
         </div>
         <!--  footer  -->
@@ -245,30 +190,71 @@
   <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
   <script type="text/javascript">
 
+
+  // $(document).on("click", "#next", function() {
+  //   $.ajax({
+  //     url: '{% url 'static' %}',
+  //     data: {
+  //       idx : $('#idx').val(),
+  //       method : 'next',
+  //     },
+  //     dataType: "json",
+  //     success: function(){
+  //       object_list = []
+  //       var tbody = document.getElementById('tbody');
+  //       tbody.innerHTML = '';
+  //     },
+  //     error: function(e){
+  //       alert("error");
+  //     },
+  //   });
+  // });
+
+
   // barChart
+  var level0 = {{ level0 }};
+  var level1 = {{ level1 }};
+  var level2 = {{ level2 }};
+  var level3 = {{ level3 }};
+  var level4 = {{ level4 }};
+  var level5 = {{ level5 }};
+  var level6 = {{ level6 }};
+  var level7 = {{ level7 }};
+  var level8 = {{ level8 }};
+  var level9 = {{ level9 }};
+
+
   var ctx = document.getElementById("barChart").getContext('2d');
   var myChart = new Chart(ctx, {
   type: 'bar',
   data: {
-      labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+      labels: ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-7", "7-8", "8-9", "9-10"],
       datasets: [{
-          label: '# of Votes',
-          data: [12, 19, 3, 5, 2, 3],
+          label: 'level',
+          data: [level0, level1, level2, level3, level4, level5, level6, level7, level8, level9],
           backgroundColor: [
-              'rgba(255, 99, 132, 0.2)',
-              'rgba(54, 162, 235, 0.2)',
-              'rgba(255, 206, 86, 0.2)',
-              'rgba(75, 192, 192, 0.2)',
-              'rgba(153, 102, 255, 0.2)',
-              'rgba(255, 159, 64, 0.2)'
+              'rgba(0, 196, 0, 0.4)',
+              'rgba(0, 224, 32, 0.4)',
+              'rgba(0, 240, 0, 0.4)',
+              'rgba(209, 255, 0, 0.4)',
+              'rgba(255, 224, 0, 0.4)',
+              'rgba(255, 204, 0, 0.4)',
+              'rgba(255, 188, 16, 0.4)',
+              'rgba(255, 156, 32, 0.4)',
+              'rgba(255, 128, 0, 0.4)',
+              'rgba(255, 0, 0, 0.4)',
           ],
           borderColor: [
-              'rgba(255,99,132,1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(255, 206, 86, 1)',
-              'rgba(75, 192, 192, 1)',
-              'rgba(153, 102, 255, 1)',
-              'rgba(255, 159, 64, 1)'
+              'rgba(0,196,0,1)',
+              'rgba(0, 224, 32, 1)',
+              'rgba(0, 240, 0, 1)',
+              'rgba(209, 255, 0, 1)',
+              'rgba(255, 224, 0, 1)',
+              'rgba(255, 204, 0, 1)',
+              'rgba(255, 188, 16, 1)',
+              'rgba(255, 156, 32, 1)',
+              'rgba(255, 128, 0, 1)',
+              'rgba(255, 0, 0, 1)',
           ],
           borderWidth: 1
       }]
@@ -284,32 +270,121 @@
   }
   });
 
-  // pieChart
-  var red = {{ red }}
-  var green = {{ green }}
-  var blue = {{ blue }}
+  var year2009 = {{ year2009 }};
+  var year2010 = {{ year2010 }};
+  var year2011 = {{ year2011 }};
+  var year2012 = {{ year2012 }};
+  var year2013 = {{ year2013 }};
+  var year2014 = {{ year2014 }};
+  var year2015 = {{ year2015 }};
+  var year2016 = {{ year2016 }};
+  var year2017 = {{ year2017 }};
+  var year2018 = {{ year2018 }};
 
-  var ctx = document.getElementById("pieChart").getContext('2d');
-  var data = {
+  var ctx = document.getElementById("barChart2").getContext('2d');
+  var myChart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+      labels: ["2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018"],
       datasets: [{
-          data: [red, green, blue],
+          label: '',
+          data: [year2009, year2010, year2011, year2012, year2013, year2014, year2015, year2016, year2017, year2018],
           backgroundColor: [
-              'rgba(255, 99, 132, 0.2)',
-              'rgba(54, 162, 235, 0.2)',
-              'rgba(255, 206, 86, 0.2)',
+              'rgba(50, 50, 50, 0.4)',
+              'rgba(0, 196, 0, 0.4)',
+              'rgba(255, 0, 0, 0.4)',
+              'rgba(255, 128, 0, 0.4)',
+              'rgba(100, 100, 0, 0.4)',
+              'rgba(0, 192, 192, 0.4)',
+              'rgba(96, 0, 255, 0.4)',
+              'rgba(200, 200, 0, 0.4)',
+              'rgba(0, 0, 255, 0.4)',
+              'rgba(255, 60, 60, 0.4)',
           ],
           borderColor: [
-              'rgba(255,99,132,1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(255, 206, 86, 1)',
+              'rgba(50, 50, 50, 1)',
+              'rgba(0, 196, 0, 1)',
+              'rgba(255, 0, 0, 1)',
+              'rgba(255, 128, 0, 1)',
+              'rgba(100, 100, 0, 1)',
+              'rgba(0, 192, 192, 1)',
+              'rgba(96, 0, 255, 1)',
+              'rgba(100, 200, 100, 1)',
+              'rgba(0, 0, 255, 1)',
+              'rgba(255, 60, 60, 1)',
+          ],
+          borderWidth: 1
+      }]
+  },
+  options: {
+      scales: {
+          yAxes: [{
+              ticks: {
+                  beginAtZero:true
+              }
+          }]
+      }
+  }
+  });
+  // pieChart
+  // var red = {{ red }}
+  // var green = {{ green }}
+  // var blue = {{ blue }}
+  // var test = 10;
+  var Dos = {{ Dos }};
+  var Overflow = {{ Overflow }};
+  var XSS = {{ XSS }};
+  var SqlInjection = {{ SqlInjection }};
+  var CSRF = {{ CSRF }};
+  var FileInclusion = {{ FileInclusion }};
+  var MemoryCorruption = {{ MemoryCorruption }};
+  var GainPrivilege = {{ GainPrivilege }};
+  var ExecuteCode = {{ ExecuteCode }};
+  var Bypasssomething = {{ Bypasssomething }};
+
+  var ctx = document.getElementById("pieChart").getContext('2d');
+  // var ctx2 = document.getElementById("pieChart2").getContext('2d');
+  var data = {
+      datasets: [{
+          data: [Dos, Overflow, XSS, SqlInjection, CSRF, FileInclusion, MemoryCorruption, GainPrivilege, ExecuteCode, Bypasssomething],
+          backgroundColor: [
+              'rgba(50, 50, 50, 0.4)',
+              'rgba(0, 196, 0, 0.4)',
+              'rgba(255, 0, 0, 0.4)',
+              'rgba(255, 128, 0, 0.4)',
+              'rgba(100, 100, 0, 0.4)',
+              'rgba(0, 192, 192, 0.4)',
+              'rgba(96, 0, 255, 0.4)',
+              'rgba(200, 200, 0, 0.4)',
+              'rgba(0, 0, 255, 0.4)',
+              'rgba(255, 60, 60, 0.4)',
+          ],
+          borderColor: [
+              'rgba(50, 50, 50, 1)',
+              'rgba(0, 196, 0, 1)',
+              'rgba(255, 0, 0, 1)',
+              'rgba(255, 128, 0, 1)',
+              'rgba(100, 100, 0, 1)',
+              'rgba(0, 192, 192, 1)',
+              'rgba(96, 0, 255, 1)',
+              'rgba(100, 200, 100, 1)',
+              'rgba(0, 0, 255, 1)',
+              'rgba(255, 60, 60, 1)',
           ],
           borderWidth: 1
       }],
       // These labels appear in the legend and in the tooltips when hovering different arcs
       labels: [
-          'Red',
-          'Yellow',
-          'Blue'
+          'DoS',
+          'Overflow',
+          'XSS',
+          'Sql Injection',
+          'CSRF',
+          'File Inclusion',
+          'Memory Corruption',
+          'Gain Privilege',
+          'Execute Code',
+          'Bypass something'
       ]
   };
   var options = {
@@ -326,5 +401,11 @@
     data: data,
     options: options
   });
+  // var myChart2 = new Chart(ctx2, {
+  //   type: 'pie',
+  //   data: data,
+  //   options: options
+  // });
+
   </script>
 </html>

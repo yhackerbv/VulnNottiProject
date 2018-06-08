@@ -3,6 +3,7 @@ from django.views.generic import FormView
 from django.views.generic import View
 from django.db import connection
 from django.shortcuts import render
+from django.http import JsonResponse
 from django.http import HttpResponseRedirect
 from .forms import UploadFileForm
 import re
@@ -53,7 +54,7 @@ class DynamicView(TemplateView):
             # print(str(line, 'UTF-8'))
 
             # r = re.compile('\@.+\@', )
-        r = re.compile(r'\@(.+)\@', re.MULTILINE)
+        r = re.compile(r'\@(.*?)\@', re.DOTALL)
         results = r.findall(temp)
 
         result_list = dict(enumerate(results, 0))
@@ -87,10 +88,18 @@ class StaticView(TemplateView):
     template_name = 'static.html'
 
     def get(self, request, *args, **kwargs):
-        context = {}
-        context['form'] = testform
 
-        query = 'SELECT * FROM vuln.vulnInfo'
+        if request.is_ajax():
+            data = 1
+            idx = request.GET.get('idx')
+            method = request.GET.get('method')
+
+            print(idx)
+            print(method)
+            return JsonResponse(data, safe=False)
+
+        context = {}
+        query = 'SELECT * FROM vuln.vulnInfo LIMIT 50'
 
         param_list = []
 
@@ -98,6 +107,8 @@ class StaticView(TemplateView):
             cursor.execute(query, param_list)
 
         columns = [column[0] for column in cursor.description]
+
+        print(columns)
 
         object_list = []
 
@@ -125,27 +136,27 @@ class StaticView(TemplateView):
         print(text)
         return render(self.request, self.template_name, context)
 
-class ServerList(View):
-    template_name = 'test.html'
-
-    def get(self, request, *args, **kwargs):
-
-        query = 'SELECT * FROM vuln.vulnInfo'
-        param_list = []
-
-        with connection.cursor() as cursor:
-            cursor.execute(query, param_list)
-
-        columns = [column[0] for column in cursor.description]
-
-        for row in cursor.fetchall():
-            object_list.append(dict(zip(columns, row)))
-
-        context = {}
-        object_list = []
-        context['object_list'] = object_list
-
-        return render(self.request, self.template_name, context)
-
-class TableView(TemplateView):
-    template_name = 'myapp_table.html'
+# class ServerList(View):
+#     template_name = 'test.html'
+#
+#     def get(self, request, *args, **kwargs):
+#
+#         query = 'SELECT * FROM vuln.vulnInfo'
+#         param_list = []
+#
+#         with connection.cursor() as cursor:
+#             cursor.execute(query, param_list)
+#
+#         columns = [column[0] for column in cursor.description]
+#
+#         for row in cursor.fetchall():
+#             object_list.append(dict(zip(columns, row)))
+#
+#         context = {}
+#         object_list = []
+#         context['object_list'] = object_list
+#
+#         return render(self.request, self.template_name, context)
+#
+# class TableView(TemplateView):
+#     template_name = 'myapp_table.html'

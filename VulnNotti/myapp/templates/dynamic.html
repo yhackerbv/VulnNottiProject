@@ -47,15 +47,16 @@
         <h1 class="text-uppercase mb-0">동적 분석 페이지입니다.</h1>
         <hr class="star-light">
         <h2 class="font-weight-light mb-0">툴을 다운로드 받은 후 결과 파일을 업로드 해주세요.</h2>
-
-
-        <a href="{% static 'img/profile.png' %}" download>
+      </div>
+      <div>
+        <a href="{% static 'img/linux_vuln_check_script.sh' %}" download>
           <button class="btn btn-success">Download!</button>
         </a>
-        <button class="btn btn-warning">Upload!</button>
-        <form method="post" enctype="multipart/form-data">{% csrf_token %}
-            <input type="file" name="sentFile" />
-            <input type="submit" name="submit" value="Upload" />
+
+        <!-- <button class="btn btn-warning">Upload!</button> -->
+        <form method="post" style="display: inline;" enctype="multipart/form-data">{% csrf_token %}
+          <input class="btn btn-warning" style="background-color: #fcc;"value="Select File" type="file" name="sentFile" />
+          <input class="btn btn-warning" style="color: white;" type="submit" name="submit" value="Upload!" />
         </form>
       </div>
     </header>
@@ -89,7 +90,7 @@
               <th>분류</th>
               <th>점검항목</th>
               <th>항목 중요도</th>
-              <th>결과</th>
+              <th style="width: 50%;">결과</th>
             </tr>
             <tbody>
               {% for object in object_list %}
