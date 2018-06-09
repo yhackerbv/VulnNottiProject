@@ -500,5 +500,26 @@ namespace VulnCrawler
                 yield return vuln;
             }
         }
+        public static IEnumerable<string> SelectRepositbyName(string _username)
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT repository FROM vuln.auth_user WHERE username = '" + _username + "'";
+            string a = null;
+
+            //sql console write 확인용
+            Console.Write(cmd.CommandText);
+
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
+            da.Fill(ds);
+            //string을 넣음
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                a = Convert.ToString(row["repository"]);
+                yield return a;
+            }
+        }
     }
 }
