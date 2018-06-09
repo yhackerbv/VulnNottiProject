@@ -533,5 +533,46 @@ namespace VulnCrawler
                 yield return a;
             }
         }
+        public static IEnumerable<string> SelectAllReposit()
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT repository FROM vuln.auth_user ";
+            string a = null;
+
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
+            da.Fill(ds);
+            //vuln에 입력
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                a = Convert.ToString(row["repository"]);
+                Console.WriteLine(a);
+
+                yield return a;
+            }
+        }
+        public static IEnumerable<string> SelectReposit_detail()
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT url FROM vulnDetail ";
+            string a = null;
+
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
+            da.Fill(ds);
+            //vuln에 입력
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                a = Convert.ToString(row["url"]);
+                Console.WriteLine(a);
+
+                yield return a;
+            }
+        }
+
     }
 }
