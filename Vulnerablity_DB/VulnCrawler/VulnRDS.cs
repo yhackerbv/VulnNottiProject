@@ -60,7 +60,13 @@ namespace VulnCrawler
             public string Year { get; set; } = "NULL"; /* year */
             public string Level { get; set; } = "NULL"; /* level */
             public string UserName { get; set; } = "NULL"; /* user name */
+            public string Publish_date { get; set; } = "NULL"; /* Publish_date */
+            public string Update_date { get; set; } = "NULL"; /* Update_date */
+            public string CveDetail { get; set; } = "NULL"; /* cveDetail */
             public string CveName { get; set; } = "NULL"; /* cve name */
+            public string FileName { get; set; } = "NULL"; /* FileName */
+            public string FuncName { get; set; } = "NULL"; /* funcName */
+            public string Url { get; set; } = "NULL"; /* Url */
 
         }
         //connect
@@ -236,19 +242,25 @@ namespace VulnCrawler
                 {
                     Connection = Conn,
                     //db에 추가
-                    CommandText = "INSERT INTO vulnDetail(type, year, level, userName, cveName) VALUES(@type, @year, @level, @userName, @cveName)"
+                    CommandText = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url) VALUES(@type, @year, @level, @userName, @cveName, @publish_date,@update_date, @cveDetail,@fileName, @funcName,@url)"
                 };
                 cmd.Parameters.AddWithValue("@type", $"{vuln.Type}");
                 cmd.Parameters.AddWithValue("@year", $"{vuln.Year}");
                 cmd.Parameters.AddWithValue("@level", $"{vuln.Level}");
                 cmd.Parameters.AddWithValue("@userName", $"{vuln.UserName}");
                 cmd.Parameters.AddWithValue("@cveName", $"{vuln.CveName}");
+                cmd.Parameters.AddWithValue("@publish_date", $"{vuln.Publish_date}");
+                cmd.Parameters.AddWithValue("@update_date", $"{vuln.Update_date}");
+                cmd.Parameters.AddWithValue("@cveDetail", $"{vuln.CveDetail}");
+                cmd.Parameters.AddWithValue("@fileName", $"{vuln.FileName}");
+                cmd.Parameters.AddWithValue("@funcName", $"{vuln.FuncName}");
+                cmd.Parameters.AddWithValue("@url", $"{vuln.Url}");
+                
                 cmd.ExecuteNonQuery();
                 //콘솔출력용
-                sql = "INSERT INTO vulnDetail(type, year, level, userName, cveName) " +
-                       $"VALUES({vuln.Type}, {vuln.Year}, {vuln.Level}, {vuln.UserName}, {vuln.CveName})";
+                sql = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url) " +
+                       $"VALUES({vuln.Type}, {vuln.Year}, {vuln.Level}, {vuln.UserName}, {vuln.CveName},{vuln.Publish_date}, {vuln.Update_date}, {vuln.CveDetail}, {vuln.FileName}, {vuln.FuncName}, {vuln.Url})";
                 Console.WriteLine(sql);
-
             }
             catch (Exception e)
             {
