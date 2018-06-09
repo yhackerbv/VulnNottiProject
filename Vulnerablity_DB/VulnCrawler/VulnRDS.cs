@@ -53,6 +53,16 @@ namespace VulnCrawler
                 return 802558182 + EqualityComparer<string>.Default.GetHashCode(BlockHash);
             }
         }
+        public class Vuln_detail
+        {
+            public int Index { get; set; } = -1; /* index key */
+            public string Type { get; set; } = "NULL"; /* type */
+            public string Year { get; set; } = "NULL"; /* year */
+            public string Level { get; set; } = "NULL"; /* level */
+            public string UserName { get; set; } = "NULL"; /* user name */
+            public string CveName { get; set; } = "NULL"; /* cve name */
+
+        }
         //connect
         public static void Connect(AWS.Account account, string dbName)
         {
@@ -214,6 +224,44 @@ namespace VulnCrawler
                 Console.ReadLine();
             }
         }
+        public static void InsertVulnDetail(Vuln_detail vuln)
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = null;
+            Retry:
+            //DB insert
+            try
+            {
+                cmd = new MySqlCommand
+                {
+                    Connection = Conn,
+                    //db에 추가
+                    CommandText = "INSERT INTO vulnDetail(type, year, level, userName, cveName) VALUES(@type, @year, @level, @userName, @cveName)"
+                };
+                cmd.Parameters.AddWithValue("@type", $"{vuln.Type}");
+                cmd.Parameters.AddWithValue("@year", $"{vuln.Year}");
+                cmd.Parameters.AddWithValue("@level", $"{vuln.Level}");
+                cmd.Parameters.AddWithValue("@userName", $"{vuln.UserName}");
+                cmd.Parameters.AddWithValue("@cveName", $"{vuln.CveName}");
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "INSERT INTO vulnDetail(type, year, level, userName, cveName) " +
+                       $"VALUES({vuln.Type}, {vuln.Year}, {vuln.Level}, {vuln.UserName}, {vuln.CveName})";
+                Console.WriteLine(sql);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                     Connect(Account, DbName);
+                    goto Retry;
+                }
+            }
+        }
+
         public static void UpdateVulnData(int _vulnId, _Vuln vuln) {
             String sql = string.Empty;
             MySqlCommand cmd = null;
