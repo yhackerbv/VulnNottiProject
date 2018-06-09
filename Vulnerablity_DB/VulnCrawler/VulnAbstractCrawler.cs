@@ -31,7 +31,7 @@ namespace VulnCrawler
             public string FuncName { get; set; }
             public string Hash { get; set; }
             public string Path { get; set; }
-
+            public string Url { get; set; }
             public override bool Equals(object obj)
             {
                 var block = obj as UserBlock;
@@ -131,7 +131,7 @@ namespace VulnCrawler
         /// <summary>
         /// 커밋에서 검색할 정규식 문자열
         /// </summary>
-        public string SearchCommitPattern => @"CVE[ -](\d{4})[ -](\d{4,})";
+        public string SearchCommitPattern => @"CVE[ -](201[5-8])[ -](\d{4,})";
         /// <summary>
         /// 패치 코드에서 함수 찾을 정규식 패턴 문자열
         /// </summary>

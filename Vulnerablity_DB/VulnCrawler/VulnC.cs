@@ -891,15 +891,10 @@ namespace VulnCrawler
             var regex2 = new Regex(stringPattern, RegexOptions.Compiled);
             var regex3 = new Regex(commentPattern2, RegexOptions.Compiled);
             var regex4 = new Regex(commentPattern, RegexOptions.Compiled);
-
             bool found3 = false;
-
             bool com = false;
-
-
             while (!reader.EndOfStream)
             {
-                
                 string line = reader.ReadLine();
                 string trim = line.Trim();
                 if (commentLine)
@@ -915,7 +910,6 @@ namespace VulnCrawler
                         continue;
                     }
                 }
-
                 // /* ~ 패턴
                 if (regex3.IsMatch(trim))
                 {
@@ -941,20 +935,18 @@ namespace VulnCrawler
                 if (found3)
                 {
                     string obStr = oldBuilder.ToString();
-                    Console.WriteLine(obStr);
-
+                    //Console.WriteLine(obStr);
                     obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
                     byte[] obStrBytes = Encoding.Unicode.GetBytes(obStr);
                     string absObStrBase64 = Convert.ToBase64String(obStrBytes);
-
-                    Console.WriteLine(obStr);
+                   // Console.WriteLine(obStr);
+                    //Console.WriteLine("HASH: " + MD5HashFunc(obStr));
+                    //Console.WriteLine(absObStrBase64);
                     if (!dict.ContainsKey(absObStrBase64.Length))
                     {
                         dict[absObStrBase64.Length] = new HashSet<UserBlock>();
                     }
-         
                     string funcName = new string(oldBuilder.ToString().TakeWhile(c => c != '{').ToArray());
-
                     (dict[absObStrBase64.Length] as HashSet<UserBlock>).Add(new UserBlock
                     {
                         Hash = MD5HashFunc(absObStrBase64),
@@ -1090,11 +1082,11 @@ namespace VulnCrawler
             if (found3)
             {
                 string obStr = oldBuilder.ToString();
-                Console.WriteLine(obStr);
+               // Console.WriteLine(obStr);
                 obStr = Abstract(obStr, new Dictionary<string, string>(), new Dictionary<string, string>());
                 byte[] obStrBytes = Encoding.Unicode.GetBytes(obStr);
                 string absObStrBase64 = Convert.ToBase64String(obStrBytes);
-                Console.WriteLine(obStr);
+               // Console.WriteLine(obStr);
                 if (!dict.ContainsKey(absObStrBase64.Length))
                 {
                     dict[absObStrBase64.Length] = new HashSet<UserBlock>();
