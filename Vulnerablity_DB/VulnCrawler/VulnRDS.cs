@@ -67,6 +67,7 @@ namespace VulnCrawler
             public string FileName { get; set; } = "NULL"; /* FileName */
             public string FuncName { get; set; } = "NULL"; /* funcName */
             public string Url { get; set; } = "NULL"; /* Url */
+            public string Product { get; set; }
 
         }
         //connect
@@ -242,7 +243,7 @@ namespace VulnCrawler
                 {
                     Connection = Conn,
                     //db에 추가
-                    CommandText = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url) VALUES(@type, @year, @level, @userName, @cveName, @publish_date,@update_date, @cveDetail,@fileName, @funcName,@url)"
+                    CommandText = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url, product) VALUES(@type, @year, @level, @userName, @cveName, @publish_date,@update_date, @cveDetail,@fileName, @funcName,@url,@product)"
                 };
                 cmd.Parameters.AddWithValue("@type", $"{vuln.Type}");
                 cmd.Parameters.AddWithValue("@year", $"{vuln.Year}");
@@ -255,16 +256,16 @@ namespace VulnCrawler
                 cmd.Parameters.AddWithValue("@fileName", $"{vuln.FileName}");
                 cmd.Parameters.AddWithValue("@funcName", $"{vuln.FuncName}");
                 cmd.Parameters.AddWithValue("@url", $"{vuln.Url}");
-                
+                cmd.Parameters.AddWithValue("@product", $"{vuln.Product}");
                 cmd.ExecuteNonQuery();
                 //콘솔출력용
                 sql = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url) " +
                        $"VALUES({vuln.Type}, {vuln.Year}, {vuln.Level}, {vuln.UserName}, {vuln.CveName},{vuln.Publish_date}, {vuln.Update_date}, {vuln.CveDetail}, {vuln.FileName}, {vuln.FuncName}, {vuln.Url})";
-                Console.WriteLine(sql);
+              //  Console.WriteLine(sql);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+               // Console.WriteLine(e.ToString());
                 string es = e.ToString();
                 if (es.Contains("Connection must be valid and open"))
                 {
