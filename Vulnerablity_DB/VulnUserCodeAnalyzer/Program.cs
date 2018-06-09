@@ -111,6 +111,7 @@ namespace VulnUserCodeAnalyzer
     {
         static void Main(string[] args)
         {
+
             /* 연도별 CVE JSON 파일 로드 */
             CVE_JSON.AutoLoad();
 
@@ -149,6 +150,15 @@ namespace VulnUserCodeAnalyzer
                 Console.WriteLine("연결 실패");
                 return;
             }
+
+            var reposits = VulnRDS.SelectAllReposit();
+
+            foreach (var (userName, repository) in reposits)
+            {
+                Console.WriteLine($"{userName}, {repository}");
+            }
+
+            Console.ReadLine();
 
             /* hashDict = 사용된 사용자 함수 정보 */
             var hashDict = new Dictionary<int, HashSet<VulnAbstractCrawler.UserBlock>>();
@@ -327,6 +337,7 @@ namespace VulnUserCodeAnalyzer
                 {
                     type = "EXCUTE";
                 }
+                
                 var urlBytes = Convert.FromBase64String(findCveDict[cve].FirstOrDefault().Url);
                 string url = Encoding.Unicode.GetString(urlBytes);
 

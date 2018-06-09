@@ -25,21 +25,14 @@ namespace DownloaderGithubClone
             Console.Write("Git Repository URL을 입력하세요 : ");
             string url = Console.ReadLine();
             //https://github.com/django/django.git
-
-
             string pattern = @"https://github.com/.+/(?<ProjectName>.+)\.(.+)";
-
             var match = Regex.Match(url, pattern);
-
             if (!match.Success) {
                 Console.WriteLine($"패턴이 맞지 않습니다. Pattern : {pattern}");
                 return;
             }
-
-
             string prName = match.Groups["ProjectName"].Value;
             Console.WriteLine(prName);
-
             int idx = 1;
             string path = Path.Combine(dir, prName);
             if (Directory.Exists(path)) {

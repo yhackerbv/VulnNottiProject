@@ -534,24 +534,23 @@ namespace VulnCrawler
                 yield return a;
             }
         }
-        public static IEnumerable<string> SelectAllReposit()
+        public static IEnumerable<(string userName, string repository)> SelectAllReposit()
         {
             String sql = string.Empty;
-            MySqlCommand cmd = new MySqlCommand();
-            cmd.Connection = Conn;
-            cmd.CommandText = "SELECT repository FROM vuln.auth_user ";
-            string a = null;
-
+            MySqlCommand cmd = new MySqlCommand
+            {
+                Connection = Conn,
+                CommandText = "SELECT username, repository FROM vuln.auth_user "
+            };
             System.Data.DataSet ds = new System.Data.DataSet();
             MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
             da.Fill(ds);
             //vuln에 입력
             foreach (System.Data.DataRow row in ds.Tables[0].Rows)
             {
-                a = Convert.ToString(row["repository"]);
-                Console.WriteLine(a);
-
-                yield return a;
+                string repo = Convert.ToString(row["repository"]);
+                string user = Convert.ToString(row["username"]);
+                yield return (user, repo);
             }
         }
         public static IEnumerable<string> SelectReposit_detail()
