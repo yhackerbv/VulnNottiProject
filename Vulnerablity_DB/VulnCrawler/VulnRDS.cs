@@ -53,6 +53,22 @@ namespace VulnCrawler
                 return 802558182 + EqualityComparer<string>.Default.GetHashCode(BlockHash);
             }
         }
+        public class Vuln_detail
+        {
+            public int Index { get; set; } = -1; /* index key */
+            public string Type { get; set; } = "NULL"; /* type */
+            public string Year { get; set; } = "NULL"; /* year */
+            public string Level { get; set; } = "NULL"; /* level */
+            public string UserName { get; set; } = "NULL"; /* user name */
+            public string Publish_date { get; set; } = "NULL"; /* Publish_date */
+            public string Update_date { get; set; } = "NULL"; /* Update_date */
+            public string CveDetail { get; set; } = "NULL"; /* cveDetail */
+            public string CveName { get; set; } = "NULL"; /* cve name */
+            public string FileName { get; set; } = "NULL"; /* FileName */
+            public string FuncName { get; set; } = "NULL"; /* funcName */
+            public string Url { get; set; } = "NULL"; /* Url */
+
+        }
         //connect
         public static void Connect(AWS.Account account, string dbName)
         {
@@ -214,6 +230,50 @@ namespace VulnCrawler
                 Console.ReadLine();
             }
         }
+        public static void InsertVulnDetail(Vuln_detail vuln)
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = null;
+            Retry:
+            //DB insert
+            try
+            {
+                cmd = new MySqlCommand
+                {
+                    Connection = Conn,
+                    //db에 추가
+                    CommandText = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url) VALUES(@type, @year, @level, @userName, @cveName, @publish_date,@update_date, @cveDetail,@fileName, @funcName,@url)"
+                };
+                cmd.Parameters.AddWithValue("@type", $"{vuln.Type}");
+                cmd.Parameters.AddWithValue("@year", $"{vuln.Year}");
+                cmd.Parameters.AddWithValue("@level", $"{vuln.Level}");
+                cmd.Parameters.AddWithValue("@userName", $"{vuln.UserName}");
+                cmd.Parameters.AddWithValue("@cveName", $"{vuln.CveName}");
+                cmd.Parameters.AddWithValue("@publish_date", $"{vuln.Publish_date}");
+                cmd.Parameters.AddWithValue("@update_date", $"{vuln.Update_date}");
+                cmd.Parameters.AddWithValue("@cveDetail", $"{vuln.CveDetail}");
+                cmd.Parameters.AddWithValue("@fileName", $"{vuln.FileName}");
+                cmd.Parameters.AddWithValue("@funcName", $"{vuln.FuncName}");
+                cmd.Parameters.AddWithValue("@url", $"{vuln.Url}");
+                
+                cmd.ExecuteNonQuery();
+                //콘솔출력용
+                sql = "INSERT INTO vulnDetail(type, year, level, userName, cveName, publish_date,update_date, cveDetail,fileName, funcName, url) " +
+                       $"VALUES({vuln.Type}, {vuln.Year}, {vuln.Level}, {vuln.UserName}, {vuln.CveName},{vuln.Publish_date}, {vuln.Update_date}, {vuln.CveDetail}, {vuln.FileName}, {vuln.FuncName}, {vuln.Url})";
+                Console.WriteLine(sql);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                string es = e.ToString();
+                if (es.Contains("Connection must be valid and open"))
+                {
+                     Connect(Account, DbName);
+                    goto Retry;
+                }
+            }
+        }
+
         public static void UpdateVulnData(int _vulnId, _Vuln vuln) {
             String sql = string.Empty;
             MySqlCommand cmd = null;
@@ -450,6 +510,27 @@ namespace VulnCrawler
                     Url = Convert.ToString(row["url"])
                 };
                 yield return vuln;
+            }
+        }
+        public static IEnumerable<string> SelectRepositbyName(string _username)
+        {
+            String sql = string.Empty;
+            MySqlCommand cmd = new MySqlCommand();
+            cmd.Connection = Conn;
+            cmd.CommandText = "SELECT repository FROM vuln.auth_user WHERE username = '" + _username + "'";
+            string a = null;
+
+            //sql console write 확인용
+            Console.Write(cmd.CommandText);
+
+            System.Data.DataSet ds = new System.Data.DataSet();
+            MySqlDataAdapter da = new MySqlDataAdapter(cmd.CommandText, Conn);
+            da.Fill(ds);
+            //string을 넣음
+            foreach (System.Data.DataRow row in ds.Tables[0].Rows)
+            {
+                a = Convert.ToString(row["repository"]);
+                yield return a;
             }
         }
     }
