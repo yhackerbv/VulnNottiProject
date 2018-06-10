@@ -97,7 +97,9 @@
               <td>{{ object.update_date }}</td>
               <td>{{ object.fileName }}</td>
               <td>{{ object.funcName }}</td>
-              <td>{{ object.url }}</td>
+              <td>
+                <a href="{{ object.url }}">{{ object.url }}</a>
+              </td>
               <td>{{ object.cveDetail }}</td>
             </tr>
             {% endfor %}
@@ -107,7 +109,7 @@
       <button id="prev" class="btn btn-primary" style="background-color: #FF0066; border: #FF0066;"><< Prev</button>
       <button id="next" class="btn btn-primary" style="margin-left: 200px; background-color: #FF0066; border: #FF0066;">Next >></button>
     </div> -->
-  
+
 
     <!-- {% for object in object_list %}
     <div class="portfolio-modal mfp-hide" id="portfolio-modal-{{ forloop.counter }}">
