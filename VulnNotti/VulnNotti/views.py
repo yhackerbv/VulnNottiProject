@@ -32,9 +32,10 @@ class HomeView(View):
         #     context['form'] = ServerList_form
         #     context['object_list'] = object_list
 
+        context = {}
+        context['user_name'] = str(request.user)
 
-
-        return render(self.request, self.template_name)
+        return render(self.request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
 

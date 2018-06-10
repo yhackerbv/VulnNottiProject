@@ -534,5 +534,7 @@ class StaticView(TemplateView):
         context['level8'] = level8
         context['level9'] = level9
 
+        context['logined_user'] = str(request.user)
+
 
         return render(self.request, self.template_name, context)

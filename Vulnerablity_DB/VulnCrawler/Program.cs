@@ -35,7 +35,7 @@ namespace VulnCrawler
             AWS.Account account = AWS.account;
            
             /* AWS 정보 출력 */
-            Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}, PW: {account.Pw}");
+            Console.WriteLine($"Endpoint: {account.Endpoint}, ID: {account.Id}");
             try
             {
                 /* DB 접속 시도 */
