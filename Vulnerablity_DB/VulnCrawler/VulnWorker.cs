@@ -30,7 +30,6 @@ namespace VulnCrawler
             }
             foreach (var commit in commits) {
                 // 커밋 메시지
-                
                 count++;
                 double per = ((double)count / (double)totalCount) * 100;
 
@@ -46,23 +45,35 @@ namespace VulnCrawler
                 string commitUrl = $"{crawler.PushUrl}/commit/{commit.Sha}";
 
                 foreach (var parent in commit.Parents) {
-
                     try
                     {
+             
+
                         // 부모 커밋과 현재 커밋을 Compare 하여 패치 내역을 가져옴
                         var patch = crawler.Repository.Diff.Compare<Patch>(parent.Tree, commit.Tree);
+                        
                         // 패치 엔트리 파일 배열 중에 파일 확장자가 .py인 것만 가져옴
                         // (실질적인 코드 변경 커밋만 보기 위해서)
                         var entrys = crawler.GetPatchEntryChanges(patch);
+                        if (entrys.Count() > 100)
+                        {
+                           // continue;
+                        }
                         /* C:\VulnC\linux 라면 linux만 뽑아서 repoName에 저장 */
                         var dsp = dirPath.Split(Path.DirectorySeparatorChar);
                         string repoName = dsp[dsp.Length - 1];
                         // 현재 커밋에 대한 패치 엔트리 배열을 출력함
                         PrintPatchEntrys(entrys, crawler, message, cve, repoName, commitUrl);
                         //  Console.ReadLine();
+                        break;
+
                     }
-                    catch(Exception)
-                    { }
+                    catch(Exception e)
+                    {
+                        break;
+                        //Console.WriteLine(e.ToString());
+                        //Console.ReadLine();
+                    }
                 }
             }
         }
@@ -133,7 +144,7 @@ namespace VulnCrawler
                     #endregion
 
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     continue;
                 }

@@ -16,6 +16,9 @@ namespace VulnCrawler
         protected override string Extension => ".py";
         protected override string RegexFuncPattern => $@"@@ \-(?<{OldStart}>\d+),(?<{OldLines}>\d+) \+(?<{NewStart}>\d+),(?<{NewLines}>\d+) @@ def (?<{MethodName}>\w+)";
         protected override string ReservedFileName => "PyReserved.txt";
+
+        protected override string UserRegexFuncPattern => throw new NotImplementedException();
+
         public override MatchCollection GetMatches(string patchCode) {
             //var regs = Regex.Matches(patchCode, RegexFuncPattern);
             var regs = MethodExtractor.Matches(patchCode);
@@ -82,6 +85,11 @@ namespace VulnCrawler
         }
 
         public override IDictionary<int, IEnumerable<UserBlock>> CrawlUserCode(StreamReader reader)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IDictionary<string, string> CrawlCode(StreamReader reader)
         {
             throw new NotImplementedException();
         }
