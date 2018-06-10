@@ -219,26 +219,12 @@ namespace VulnUserCodeAnalyzer
                         var repoBytes = Encoding.Unicode.GetBytes(repository);
                         var repoBase64 = Convert.ToBase64String(repoBytes);
 
-                        var repoDir = new DirectoryInfo($@"C:\Repo\{repoBase64}");
-                        if (repoDir.Exists)
-                        {
-                            continue;
-                        }
-                        repoDir.Create();
-                        Console.WriteLine($"Clone... Path : {repoDir.FullName}, Url : {repository}");
-                        Clone(repoDir.FullName, repository);
+            foreach (var (userName, repository) in reposits)
+            {
+                Console.WriteLine($"{userName}, {repository}");
+            }
 
-                        repoPath = repoDir.FullName;
-                        userId = userName;
-                    }
-                    if (!string.IsNullOrWhiteSpace(repoPath) && !string.IsNullOrWhiteSpace(userId))
-                    {
-                        break;
-                    }
-                    repoWatch.Restart();
-                }
-                //Console.WriteLine("엔터를 누르세요");
-                //Console.ReadLine();
+            Console.ReadLine();
 
                 /* hashDict = 사용된 사용자 함수 정보 */
                 var hashDict = new Dictionary<int, HashSet<VulnAbstractCrawler.UserBlock>>();
@@ -247,205 +233,197 @@ namespace VulnUserCodeAnalyzer
                 stopwatch.Start();
                 DirectoryInfo dirInfo = new DirectoryInfo(repoPath);
 
-                /* 모든 .c 파일 탐색 */
-                var codeFiles = dirInfo.EnumerateFiles("*.c", SearchOption.AllDirectories);
-                int totalFileCount = codeFiles.Count();
-                int count = 0;
-                foreach (var codeFile in codeFiles)
+            /* 모든 .c 파일 탐색 */
+            var codeFiles = dirInfo.EnumerateFiles("*.c", SearchOption.AllDirectories);
+            int totalFileCount = codeFiles.Count();
+            int count = 0;
+            foreach (var codeFile in codeFiles)
+            {
+                Console.WriteLine(codeFile.FullName);
+                using (var reader = codeFile.OpenText())
                 {
-                    Console.WriteLine(codeFile.FullName);
-                    using (var reader = codeFile.OpenText())
+                    /* 사용자 코드를 함수별로 나눔 */
+                    var dict = crawler.CrawlUserCode(reader);
+                    foreach (var item in dict)
                     {
-                        /* 사용자 코드를 함수별로 나눔 */
-                        var dict = crawler.CrawlUserCode(reader);
-                        foreach (var item in dict)
+                        /* hashDict의 키와 item.key는 함수 블록의 코드 길이 */
+                        if (!hashDict.ContainsKey(item.Key))
                         {
-                            /* hashDict의 키와 item.key는 함수 블록의 코드 길이 */
-                            if (!hashDict.ContainsKey(item.Key))
-                            {
-                                hashDict[item.Key] = new HashSet<VulnAbstractCrawler.UserBlock>();
-                            }
-                            /* item.Value는 각 코드 길이 마다의 블록 정보 
-                             * Bloom Filter에 코드 블록 해쉬값 기록
-                             */
-                            foreach (var hash in item.Value)
-                            {
-                                hash.Path = codeFile.FullName;
-                                hashDict[item.Key].Add(hash);
-                                filter.Add(hash.Hash);
-                            }
+                            hashDict[item.Key] = new HashSet<VulnAbstractCrawler.UserBlock>();
                         }
-                        count++;
-                        double per = ((double)count / (double)totalFileCount) * 100;
-                        Console.WriteLine($"{count} / {totalFileCount} :: {per.ToString("#0.0")}%, 개체 수 : {hashDict.Count}");
-                    }
-                }
-                var findBlocks = new Queue<VulnAbstractCrawler.UserBlock>();
-                var vulnDict = new Dictionary<string, IEnumerable<VulnRDS._Vuln>>();
-                foreach (var set in hashDict)
-                {
-                    /* 사용자 코드의 길이 마다 DB로 부터 같은 길이의 CVE 레코드 목록 가져옴 */
-                    var cveList = VulnRDS.SelectVulnbyLen(set.Key).Select(v => v.Cve).Distinct();
-                    foreach (var cve in cveList)
-                    {
-                        if (!vulnDict.ContainsKey(cve))
-                        {
-                            vulnDict[cve] = new HashSet<VulnRDS._Vuln>();
-                            var vulnHashSet = vulnDict[cve] as HashSet<VulnRDS._Vuln>;
-                            /* 같은 길이의 CVE에서 또 같은 종류의 CVE 레코드 목록 가져옴
-                             * 같은 종류의 CVE 레코드들이 사용자 코드에서 모두 포함되어야 
-                             * CVE를 가지고 있다고 인정하는 프로그램 정책 때문 
-                             */
-                            var searchedCveHashList = VulnRDS.SelectVulnbyCve(cve);
-                            Console.WriteLine($"CVE:{cve}, Received Count : {searchedCveHashList.Count()}");
-                            foreach (var s in searchedCveHashList)
-                            {
-                                vulnHashSet.Add(s);
-                            }
-
-                        }
-                    }
-                }
-                var findCveDict = new Dictionary<string, List<VulnAbstractCrawler.UserBlock>>();
-                var findCveList = new HashSet<string>();
-                /* 본격적인 취약점 매칭 부분 */
-                foreach (var vulnSet in vulnDict)
-                {
-                    Console.WriteLine($"-----cve:{vulnSet.Key}");
-                    bool match = false;
-                    foreach (var vuln in vulnSet.Value)
-                    {
-                        /* 사용자 코드 해쉬 저장해논 bloom filter에 취약점 레코드 해쉬값들이 포함되는지 확인
-                         * 포함이 된다는 건 해당 취약점 레코드가 사용자 코드에도 있다는 뜻(취약점)
-                         * 같은 종류의 CVE 레코드가 전부 필터에 포함된다면 취약점으로 판단한다.
+                        /* item.Value는 각 코드 길이 마다의 블록 정보 
+                         * Bloom Filter에 코드 블록 해쉬값 기록
                          */
-                        if (filter.Contains(vuln.BlockHash))
+                        foreach (var hash in item.Value)
                         {
-                            if (hashDict.ContainsKey(vuln.LenFunc))
-                            {
-                                //Console.WriteLine("찾음");
-                                /* Bloom Filter는 아쉽게도 포함 여부만 알 수 있기에 
-                                 * 포함되었음을 알았다면 검색해서 정보를 구한다. */
-                                var userBlock = hashDict[vuln.LenFunc].FirstOrDefault(b => b.Hash == vuln.BlockHash);
-                                if (userBlock == null)
-                                {
-                                    continue;
-                                }
-                                /* 해당 유저 블록을 임시 저장한다.
-                                 * 밑에서 블록 정보를 DB로 전송하기 위해서다. 
-                                 */
-                                if (!findCveDict.ContainsKey(vuln.Cve))
-                                {
-                                    findCveDict[vuln.Cve] = new List<VulnAbstractCrawler.UserBlock>();
-                                }
-                                userBlock.Url = vuln.Url;
-                                findCveDict[vuln.Cve].Add(userBlock);
-                                match = true;
-                            }
-                        }
-                        else
-                        {
-                            match = false;
-                            break;
+                            hash.Path = codeFile.FullName;
+                            hashDict[item.Key].Add(hash);
+                            filter.Add(hash.Hash);
                         }
                     }
-                    /* 취약점 레코드가 전부 있어야 CVE 찾음 인정 */
-                    if (match)
+                    count++;
+                    double per = ((double)count / (double)totalFileCount) * 100;
+                    Console.WriteLine($"{count} / {totalFileCount} :: {per.ToString("#0.0")}%, 개체 수 : {hashDict.Count}");
+                }
+            }
+            var findBlocks = new Queue<VulnAbstractCrawler.UserBlock>();
+            var vulnDict = new Dictionary<string, IEnumerable<VulnRDS._Vuln>>();
+            foreach (var set in hashDict)
+            {
+                /* 사용자 코드의 길이 마다 DB로 부터 같은 길이의 CVE 레코드 목록 가져옴 */
+                var cveList = VulnRDS.SelectVulnbyLen(set.Key).Select(v => v.Cve).Distinct();
+                foreach (var cve in cveList)
+                {
+                    if (!vulnDict.ContainsKey(cve))
                     {
-                        Console.WriteLine($"Matched CVE : {vulnSet.Key}");
-                        /* 찾았으면 cve값을 기록함 밑에서 찾은 cve 정보 전송하기 위해 */
-                        findCveList.Add(vulnSet.Key);
+                        vulnDict[cve] = new HashSet<VulnRDS._Vuln>();
+                        var vulnHashSet = vulnDict[cve] as HashSet<VulnRDS._Vuln>;
+                        /* 같은 길이의 CVE에서 또 같은 종류의 CVE 레코드 목록 가져옴
+                         * 같은 종류의 CVE 레코드들이 사용자 코드에서 모두 포함되어야 
+                         * CVE를 가지고 있다고 인정하는 프로그램 정책 때문 
+                         */
+                        var searchedCveHashList = VulnRDS.SelectVulnbyCve(cve);
+                        Console.WriteLine($"cve:{cve}, {searchedCveHashList.Count()}개 가져옴");
+                        foreach (var s in searchedCveHashList)
+                        {
+                            vulnHashSet.Add(s);
+                        }
+                        
+                    }
+                }
+            }
+            var findCveDict = new Dictionary<string, List<VulnAbstractCrawler.UserBlock>>();
+            var findCveList = new HashSet<string>();
+            /* 본격적인 취약점 매칭 부분 */
+            foreach (var vulnSet in vulnDict)
+            {
+                //Console.WriteLine($"-----cve:{vulnSet.Key}");
+                bool match = false;
+                foreach (var vuln in vulnSet.Value)
+                {
+                    /* 사용자 코드 해쉬 저장해논 bloom filter에 취약점 레코드 해쉬값들이 포함되는지 확인
+                     * 포함이 된다는 건 해당 취약점 레코드가 사용자 코드에도 있다는 뜻(취약점)
+                     * 같은 종류의 CVE 레코드가 전부 필터에 포함된다면 취약점으로 판단한다.
+                     */
+                    if (filter.Contains(vuln.BlockHash))
+                    {
+                        if (hashDict.ContainsKey(vuln.LenFunc))
+                        {
+                            /* Bloom Filter는 아쉽게도 포함 여부만 알 수 있기에 
+                             * 포함되었음을 알았다면 검색해서 정보를 구한다. */
+                            var userBlock = hashDict[vuln.LenFunc].FirstOrDefault(b => b.Hash == vuln.BlockHash);
+                            if (userBlock == null)
+                            {
+                                continue;
+                            }
+                            /* 해당 유저 블록을 임시 저장한다.
+                             * 밑에서 블록 정보를 DB로 전송하기 위해서다. 
+                             */
+                            if (!findCveDict.ContainsKey(vuln.Cve))
+                            {
+                                findCveDict[vuln.Cve] = new List<VulnAbstractCrawler.UserBlock>();
+                            }
+                            userBlock.Url = vuln.Url;
+                            findCveDict[vuln.Cve].Add(userBlock);
+                            match = true;
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Not");
+                        match = false;
+                        break;
                     }
                 }
-                stopwatch.Stop();
-                /* 매칭 끝 후처리 (출력, DB 전송 등) */
-                var hours = stopwatch.Elapsed.Hours;
-                var minutes = stopwatch.Elapsed.Minutes;
-                var seconds = stopwatch.Elapsed.Seconds;
-                Console.WriteLine($"Elapsed Time : {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
-                Console.WriteLine($"Matched CVE Count : {findCveList.Count}");
-                //Console.ReadLine();
-
-                var yearMatch = new Regex(@"CVE-(\d{4})-(\d+)");
-                foreach (var cve in findCveList)
+                /* 취약점 레코드가 전부 있어야 CVE 찾음 인정 */
+                if (match)
                 {
-                    Console.WriteLine(cve);
-                    var c = yearMatch.Match(cve);
-                    int year = int.Parse(c.Groups[1].Value);
-                    if (!CVE_JSON.CveDict.ContainsKey(year))
-                    {
-                        continue;
-                    }
-                    if (!CVE_JSON.CveDict[year].ContainsKey(cve))
-                    {
-                        continue;
-                    }
-                    var data = CVE_JSON.CveDict[year][cve];
-
-                    /* 취약점 타입 분류 */
-                    string type = "NORMAL";
-                    if (data.Detail.IndexOf("overflow", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "OVERFLOW";
-                    }
-                    else if (data.Detail.IndexOf("xss", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "XSS";
-                    }
-                    else if (data.Detail.IndexOf("injection", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "SQLINJECTION";
-                    }
-                    else if (data.Detail.IndexOf("dos", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "DOS";
-                    }
-                    else if (data.Detail.IndexOf("Memory", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "MEMORY";
-                    }
-                    else if (data.Detail.IndexOf("CSRF", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "CSRF";
-                    }
-                    else if (data.Detail.IndexOf("inclusion", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "FILEINCLUSION";
-                    }
-                    else if (data.Detail.IndexOf("EXCUTE", StringComparison.CurrentCultureIgnoreCase) > 0)
-                    {
-                        type = "EXCUTE";
-                    }
-
-                    var urlBytes = Convert.FromBase64String(findCveDict[cve].FirstOrDefault().Url);
-                    string url = Encoding.Unicode.GetString(urlBytes);
-                    //Console.WriteLine(findCveDict[cve].FirstOrDefault().Path.Replace(repoPath, ""));
-
-                    var vulnDetail = new VulnRDS.Vuln_detail
-                    {
-                        CveName = data.Code,
-                        Type = type,
-                        Level = data.Level.ToString(),
-                        Year = data.Year.ToString(),
-                        CveDetail = data.Detail,
-                        Publish_date = data.Publish_Date.ToString("yyyy-MM-dd"),
-                        Update_date = data.Update_Date.ToString("yyyy-MM-dd"),
-                        UserName = userId,
-                        Url = url,
-                        FileName = findCveDict[cve].FirstOrDefault().Path.Replace(repoPath, ""),
-                        FuncName = findCveDict[cve].FirstOrDefault().FuncName,
-                        Product = data.Type,
-                    };
-
-                    /* DB 전송 */
-                    VulnRDS.InsertVulnDetail(vulnDetail);
-
-                    Console.WriteLine($"Added CVE: {vulnDetail.CveName}, Type: {vulnDetail.Type}, CVSS: {vulnDetail.Level}");
+                    Console.WriteLine($"CVE 찾음 {vulnSet.Key}");
+                    /* 찾았으면 cve값을 기록함 밑에서 찾은 cve 정보 전송하기 위해 */
+                    findCveList.Add(vulnSet.Key);
                 }
+                else
+                {
+                    Console.WriteLine("없음");
+                }
+            }
+            stopwatch.Stop();
+            /* 매칭 끝 후처리 (출력, DB 전송 등) */
+            var hours = stopwatch.Elapsed.Hours;
+            var minutes = stopwatch.Elapsed.Minutes;
+            var seconds = stopwatch.Elapsed.Seconds;
+            Console.WriteLine($"경과 시간 {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
+            Console.WriteLine($"찾은 CVE 개수 : {findCveList.Count}");
+            var yearMatch = new Regex(@"CVE-(\d{4})-(\d+)");
+            foreach (var cve in findCveList)
+            {
+                Console.WriteLine(cve);
+                var c = yearMatch.Match(cve);
+                int year = int.Parse(c.Groups[1].Value);
+                if (!CVE_JSON.CveDict.ContainsKey(year))
+                {
+                    continue;
+                }
+                if (!CVE_JSON.CveDict[year].ContainsKey(cve))
+                {
+                    continue;
+                }
+                var data = CVE_JSON.CveDict[year][cve];
+
+                /* 취약점 타입 분류 */
+                string type = "NORMAL";
+                if (data.Detail.IndexOf("overflow", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "OVERFLOW";
+                }
+                else if (data.Detail.IndexOf("xss", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "XSS";
+                }
+                else if (data.Detail.IndexOf("injection", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "SQLINJECTION";
+                }
+                else if (data.Detail.IndexOf("dos", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "DOS";
+                }
+                else if (data.Detail.IndexOf("Memory", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "MEMORY";
+                }
+                else if (data.Detail.IndexOf("CSRF", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "CSRF";
+                }
+                else if (data.Detail.IndexOf("inclusion", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "FILEINCLUSION";
+                }
+                else if (data.Detail.IndexOf("EXCUTE", StringComparison.CurrentCultureIgnoreCase) > 0)
+                {
+                    type = "EXCUTE";
+                }
+                
+                var urlBytes = Convert.FromBase64String(findCveDict[cve].FirstOrDefault().Url);
+                string url = Encoding.Unicode.GetString(urlBytes);
+
+                /* DB 전송 */
+                VulnRDS.InsertVulnDetail(new VulnRDS.Vuln_detail
+                {
+                    CveName = data.Code,
+                    Type = type,
+                    Level = data.Level.ToString(),
+                    Year = data.Year.ToString(),
+                    CveDetail = data.Detail,
+                    Publish_date = data.Publish_Date.ToString("yyyy-MM-dd"),
+                    Update_date = data.Update_Date.ToString("yyyy-MM-dd"),
+                    UserName = "samsung",
+                    Url = url,
+                    FileName = findCveDict[cve].FirstOrDefault().Path.Replace(@"C:\code", ""),
+                    FuncName = findCveDict[cve].FirstOrDefault().FuncName,
+                    Product = data.Type,
+                });
+                Console.WriteLine("추가 완료");
             }
         }
     }
