@@ -6,6 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.http import HttpResponseRedirect, HttpResponse
 from VulnNotti.forms import *;
 from django.shortcuts import redirect, render
+from django.db import connection
 
 class HomeView(View):
     template_name = 'index.html'
@@ -72,10 +73,22 @@ class EditView(TemplateView):
 
     def post(self, request, *args, **kwargs):
 
-        email = self.request.POST['email']
         repository = self.request.POST['repository']
+        user = request.user
 
-        print(email, repository)
+
+        query = "UPDATE vuln.auth_user SET repository = %s WHERE username = %s"
+
+        param_list = []
+
+        param_list.append(str(repository))
+        param_list.append(str(user))
+
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, param_list)
+
+        print(repository, user)
         return render(self.request, 'index.html')
 
 
@@ -84,6 +97,8 @@ class UserCreateView(CreateView):
     template_name = 'registration/register.html'
     success_url = reverse_lazy('register_done')
     form_class = UserCreationForm
+
+
 
 class UserCreateDoneTV(TemplateView):
     template_name = 'registration/register_done.html'

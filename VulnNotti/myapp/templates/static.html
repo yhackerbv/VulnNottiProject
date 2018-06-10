@@ -34,21 +34,6 @@
     <nav class="navbar navbar-expand-lg bg-secondary fixed-top text-uppercase" id="mainNav">
       <div class="container">
         <a class="navbar-brand js-scroll-trigger" href="/">Home</a>
-        <!-- <button class="navbar-toggler navbar-toggler-right text-uppercase bg-primary text-white rounded" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          Menu
-          <i class="fa fa-bars"></i>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item mx-0 mx-lg-1">
-              <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/myapp">Chart</a>
-            </li>
-            <li class="nav-item mx-0 mx-lg-1">
-              <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/myapp/table">Table</a>
-            </li>
-
-          </ul>
-        </div> -->
       </div>
     </nav>
 
@@ -87,75 +72,59 @@
 
     <div class="col-md-12 col-lg-12">
       <div style="width: 100%; margin-left: 0px; margin-right: 0px;">
-        <!-- <form method="post" action=".">
-          <fieldset>{% csrf_token %}
-            <div>
-              {{ form.text.label_tag }} {{ form.text }}
-            </div>
-            <input type="submit" value="submit"/>
-          </fieldset>
-        </form> -->
 
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>번호</th>
-              <th>제목</th>
-              <th>이름</th>
+              <th>NO</th>
               <th>CVE</th>
-              <th>내용</th>
-              <th>이름</th>
-
+              <th>Type</th>
+              <th>Level</th>
+              <th>Publish Date</th>
+              <th>Update Date</th>
+              <th>File Name</th>
+              <th>Function Name</th>
+              <th>CVE URL</th>
+              <th>CVE Detail</th>
             </tr>
             {% for object in object_list %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td>{{ object.vulnId }}</td>
-              <td>{{ object.lenBlock }}</td>
-              <td>{{ object.cve }}</td>
+              <td>{{ object.cveName }}</td>
+              <td>{{ object.type }}</td>
+              <td>{{ object.level }}</td>
+              <td>{{ object.publish_date }}</td>
+              <td>{{ object.update_date }}</td>
+              <td>{{ object.fileName }}</td>
               <td>{{ object.funcName }}</td>
-              <td>{{ object.numBlock }}</td>
-
-
-              <td id="modal_{{ forloop.counter }}">
-                <a class="portfolio-item d-block mx-auto" href="#portfolio-modal-{{ forloop.counter }}">
-                  <button class="btn btn-primary">자세히보기</button></td>
-                </a>
-              </td>
+              <td>{{ object.url }}</td>
+              <td>{{ object.cveDetail }}</td>
             </tr>
             {% endfor %}
         </table>
     </div>
-    <div style="text-align: center;">
+    <!-- <div style="text-align: center;">
       <button id="prev" class="btn btn-primary" style="background-color: #FF0066; border: #FF0066;"><< Prev</button>
       <button id="next" class="btn btn-primary" style="margin-left: 200px; background-color: #FF0066; border: #FF0066;">Next >></button>
-    </div>
-    &nbsp;
-    &nbsp;
+    </div> -->
+  
 
-    {% for object in object_list %}
+    <!-- {% for object in object_list %}
     <div class="portfolio-modal mfp-hide" id="portfolio-modal-{{ forloop.counter }}">
       <div class="portfolio-modal-dialog bg-white">
-        <!--  header  -->
+
         <div class="modal-header">
           <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">cve function name</h2>
         </div>
-        <!--  left side  -->
+
         <div class="col-lg-6" style="float: left; border: 1px solid red; height: 1000px;">
           <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">previous sourcecode</h2>
           <hr class="star-dark mb-5">
           <pre><code>
-            <!-- #include <iostream>;
-            using namespace std;
 
-            int main()
-            {
-                return 0;
-
-            } -->
           </code></pre>
         </div>
-        <!--  right side  -->
+
         <div class="col-lg-6" style="float: left; border: 1px solid red; height: 1000px;">
           <h2 class="text-secondary text-uppercase mb-0" style="text-align: center;">modified sourcecode</h2>
           <hr class="star-dark mb-5">
@@ -163,7 +132,7 @@
             {{ object.codeOriBefore }}
           </code></pre>
         </div>
-        <!--  footer  -->
+
         <div class="modal-footer" style="float: clear;">
           <a class="btn btn-primary btn-lg rounded-pill portfolio-modal-dismiss" href="#">
             <i class="fa fa-close"></i>
@@ -173,7 +142,7 @@
 
       </div>
     </div>
-    {% endfor %}
+    {% endfor %} -->
 
   </body>
 
@@ -230,7 +199,7 @@
   data: {
       labels: ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-7", "7-8", "8-9", "9-10"],
       datasets: [{
-          label: 'level',
+          label: 'CVE Level',
           data: [level0, level1, level2, level3, level4, level5, level6, level7, level8, level9],
           backgroundColor: [
               'rgba(0, 196, 0, 0.4)',
@@ -287,7 +256,7 @@
   data: {
       labels: ["2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018"],
       datasets: [{
-          label: '',
+          label: 'CVE Year',
           data: [year2009, year2010, year2011, year2012, year2013, year2014, year2015, year2016, year2017, year2018],
           backgroundColor: [
               'rgba(50, 50, 50, 0.4)',
@@ -331,26 +300,24 @@
   // var green = {{ green }}
   // var blue = {{ blue }}
   // var test = 10;
-  var Dos = {{ Dos }};
-  var Overflow = {{ Overflow }};
+  var Dos = {{ DOS }};
+  var Overflow = {{ OVERFLOW }};
   var XSS = {{ XSS }};
-  var SqlInjection = {{ SqlInjection }};
+  var SqlInjection = {{ SQLINJECTION }};
   var CSRF = {{ CSRF }};
-  var FileInclusion = {{ FileInclusion }};
-  var MemoryCorruption = {{ MemoryCorruption }};
-  var GainPrivilege = {{ GainPrivilege }};
-  var ExecuteCode = {{ ExecuteCode }};
-  var Bypasssomething = {{ Bypasssomething }};
+  var FileInclusion = {{ FILEINCLUSION }};
+  var MemoryCorruption = {{ MEMORY }};
+  var ExecuteCode = {{ EXCUTE }};
+  var NORMAL = {{ NORMAL }};
 
   var ctx = document.getElementById("pieChart").getContext('2d');
   // var ctx2 = document.getElementById("pieChart2").getContext('2d');
   var data = {
       datasets: [{
-          data: [Dos, Overflow, XSS, SqlInjection, CSRF, FileInclusion, MemoryCorruption, GainPrivilege, ExecuteCode, Bypasssomething],
+          data: [Dos, Overflow, XSS, SqlInjection, CSRF, FileInclusion, MemoryCorruption, ExecuteCode, NORMAL],
           backgroundColor: [
               'rgba(50, 50, 50, 0.4)',
               'rgba(0, 196, 0, 0.4)',
-              'rgba(255, 0, 0, 0.4)',
               'rgba(255, 128, 0, 0.4)',
               'rgba(100, 100, 0, 0.4)',
               'rgba(0, 192, 192, 0.4)',
@@ -362,7 +329,6 @@
           borderColor: [
               'rgba(50, 50, 50, 1)',
               'rgba(0, 196, 0, 1)',
-              'rgba(255, 0, 0, 1)',
               'rgba(255, 128, 0, 1)',
               'rgba(100, 100, 0, 1)',
               'rgba(0, 192, 192, 1)',
@@ -382,15 +348,14 @@
           'CSRF',
           'File Inclusion',
           'Memory Corruption',
-          'Gain Privilege',
           'Execute Code',
-          'Bypass something'
+          'NORMAL'
       ]
   };
   var options = {
           title: {
                     display: true,
-                    text: 'CVE',
+                    text: 'CVE Type',
                     position: 'top'
                 },
           rotation: -0.7 * Math.PI

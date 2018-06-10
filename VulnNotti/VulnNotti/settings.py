@@ -88,9 +88,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'vuln',
-        'USER': 'yhackerbv',
-        'PASSWORD': 'guswhd12',
-        'HOST': 'vulndb.cby38wfppa7l.us-east-2.rds.amazonaws.com',
+        'USER': 'ingjiyun',
+        'PASSWORD': 'vulnnotti93',
+        'HOST': 'vulnnotti.cr0yrwhvisei.ap-northeast-2.rds.amazonaws.com',
         'PORT': '3306'
     }
 }
