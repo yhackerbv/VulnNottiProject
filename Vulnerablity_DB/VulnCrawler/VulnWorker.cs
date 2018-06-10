@@ -41,14 +41,11 @@ namespace VulnCrawler
                 if (string.IsNullOrEmpty(cve)) {
                     continue;
                 }
-
                 string commitUrl = $"{crawler.PushUrl}/commit/{commit.Sha}";
 
                 foreach (var parent in commit.Parents) {
                     try
                     {
-             
-
                         // 부모 커밋과 현재 커밋을 Compare 하여 패치 내역을 가져옴
                         var patch = crawler.Repository.Diff.Compare<Patch>(parent.Tree, commit.Tree);
                         
@@ -132,7 +129,7 @@ namespace VulnCrawler
                             };
 
                             /* VulnDB에 추가 */
-                            VulnRDS._InsertVulnData(vuln);
+                            //VulnRDS._InsertVulnData(vuln);
 
                         }
                     }
