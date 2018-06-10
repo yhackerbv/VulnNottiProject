@@ -126,39 +126,26 @@ namespace VulnUserCodeAnalyzer
             long receivedTotal = progress.ReceivedBytes;
             double received = progress.ReceivedBytes / 1000000;
             double percent = ((double)receivedBytes / (double)totalBytes);
-
             Console.WriteLine($"Progress: {percent.ToString("P2")}, Remain: {receivedBytes} of {totalBytes}"); //, 받은 용량: {received.ToString()}MB");
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             return true;
         }
-
-
         public static void CheckoutProcess(string path, int completedSteps, int totalSteps)
         {
             Console.WriteLine($"{completedSteps}, {totalSteps}, {path}");
         }
 
-
         public static void Clone(string path, string url)
         {
- 
-
             Console.WriteLine($"Start Cloning Path : {path}");
-
-
             string clone = Repository.Clone(url, $@"{path}", new CloneOptions { OnTransferProgress = TransferProgress, OnCheckoutProgress = CheckoutProcess });
             Console.ResetColor();
             Console.WriteLine($"Finished Clone Repository: {clone}");
-
-
         }
         static void Main(string[] args)
         {
-
-            
             /* 연도별 CVE JSON 파일 로드 */
             CVE_JSON.AutoLoad();
-
             /* 크롤러 타입 */
             var crawler = new VulnC();
 
@@ -194,7 +181,6 @@ namespace VulnUserCodeAnalyzer
                 Console.WriteLine("Fail Connection");
                 return;
             }
-
             while (true)
             {
                 string userId = string.Empty;
@@ -218,27 +204,21 @@ namespace VulnUserCodeAnalyzer
                         }
                         var repoBytes = Encoding.Unicode.GetBytes(repository);
                         var repoBase64 = Convert.ToBase64String(repoBytes);
-
-            foreach (var (userName, repository) in reposits)
-            {
-                Console.WriteLine($"{userName}, {repository}");
-            }
-
+                        var repoDir = new DirectoryInfo($@"C:\Repo\{repoBase64}");
+                        if (repoDir.Exists)
+                        {
+                            continue;
+                        }
+                        repoDir.Create();
+                        Console.WriteLine($"Clone... Path : {repoDir.FullName}, Url : {repository}");
+                        Clone(repoDir.FullName, repository);
                         repoPath = repoDir.FullName;
                         userId = userName;
-<<<<<<<<< Temporary merge branch 1
                     }
                     if (!string.IsNullOrWhiteSpace(repoPath) && !string.IsNullOrWhiteSpace(userId))
                     {
                         break;
                     }
-=========
-                    }
-                    if (!string.IsNullOrWhiteSpace(repoPath) && !string.IsNullOrWhiteSpace(userId))
-                    {
-                        break;
-                    }
->>>>>>>>> Temporary merge branch 2
                     repoWatch.Restart();
                 }
                 //Console.WriteLine("엔터를 누르세요");
@@ -301,11 +281,8 @@ namespace VulnUserCodeAnalyzer
                              * CVE를 가지고 있다고 인정하는 프로그램 정책 때문 
                              */
                             var searchedCveHashList = VulnRDS.SelectVulnbyCve(cve);
-<<<<<<<<< Temporary merge branch 1
-                            Console.WriteLine($"cve:{cve}, {searchedCveHashList.Count()}개 가져옴");
-=========
+
                             Console.WriteLine($"CVE:{cve}, Received Count : {searchedCveHashList.Count()}");
->>>>>>>>> Temporary merge branch 2
                             foreach (var s in searchedCveHashList)
                             {
                                 vulnHashSet.Add(s);
@@ -331,11 +308,6 @@ namespace VulnUserCodeAnalyzer
                         {
                             if (hashDict.ContainsKey(vuln.LenFunc))
                             {
-<<<<<<<<< Temporary merge branch 1
-                                Console.WriteLine("찾음");
-=========
-                                //Console.WriteLine("찾음");
->>>>>>>>> Temporary merge branch 2
                                 /* Bloom Filter는 아쉽게도 포함 여부만 알 수 있기에 
                                  * 포함되었음을 알았다면 검색해서 정보를 구한다. */
                                 var userBlock = hashDict[vuln.LenFunc].FirstOrDefault(b => b.Hash == vuln.BlockHash);
@@ -364,21 +336,13 @@ namespace VulnUserCodeAnalyzer
                     /* 취약점 레코드가 전부 있어야 CVE 찾음 인정 */
                     if (match)
                     {
-<<<<<<<<< Temporary merge branch 1
-                        Console.WriteLine($"CVE 찾음 {vulnSet.Key}");
-=========
                         Console.WriteLine($"Matched CVE : {vulnSet.Key}");
->>>>>>>>> Temporary merge branch 2
                         /* 찾았으면 cve값을 기록함 밑에서 찾은 cve 정보 전송하기 위해 */
                         findCveList.Add(vulnSet.Key);
                     }
                     else
                     {
-<<<<<<<<< Temporary merge branch 1
-                        Console.WriteLine("없음");
-=========
                         Console.WriteLine("Not");
->>>>>>>>> Temporary merge branch 2
                     }
                 }
                 stopwatch.Stop();
@@ -386,14 +350,8 @@ namespace VulnUserCodeAnalyzer
                 var hours = stopwatch.Elapsed.Hours;
                 var minutes = stopwatch.Elapsed.Minutes;
                 var seconds = stopwatch.Elapsed.Seconds;
-<<<<<<<<< Temporary merge branch 1
-                Console.WriteLine($"경과 시간 {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
-                Console.WriteLine($"찾은 CVE 개수 : {findCveList.Count}");
-=========
                 Console.WriteLine($"Elapsed Time : {hours.ToString("00")}:{minutes.ToString("00")}:{seconds.ToString("00")}");
                 Console.WriteLine($"Matched CVE Count : {findCveList.Count}");
->>>>>>>>> Temporary merge branch 2
-                //Console.ReadLine();
 
                 var yearMatch = new Regex(@"CVE-(\d{4})-(\d+)");
                 foreach (var cve in findCveList)
@@ -448,15 +406,7 @@ namespace VulnUserCodeAnalyzer
 
                     var urlBytes = Convert.FromBase64String(findCveDict[cve].FirstOrDefault().Url);
                     string url = Encoding.Unicode.GetString(urlBytes);
-<<<<<<<<< Temporary merge branch 1
-                    Console.WriteLine(findCveDict[cve].FirstOrDefault().Path.Replace(repoPath, ""));
-                    /* DB 전송 */
-                    VulnRDS.InsertVulnDetail(new VulnRDS.Vuln_detail
-=========
-                    //Console.WriteLine(findCveDict[cve].FirstOrDefault().Path.Replace(repoPath, ""));
-
                     var vulnDetail = new VulnRDS.Vuln_detail
->>>>>>>>> Temporary merge branch 2
                     {
                         CveName = data.Code,
                         Type = type,
@@ -470,17 +420,14 @@ namespace VulnUserCodeAnalyzer
                         FileName = findCveDict[cve].FirstOrDefault().Path.Replace(repoPath, ""),
                         FuncName = findCveDict[cve].FirstOrDefault().FuncName,
                         Product = data.Type,
-<<<<<<<<< Temporary merge branch 1
-                    });
-                    Console.WriteLine("추가 완료");
-=========
                     };
+                    Console.WriteLine("추가 완료");
+            
 
                     /* DB 전송 */
                     VulnRDS.InsertVulnDetail(vulnDetail);
 
                     Console.WriteLine($"Added CVE: {vulnDetail.CveName}, Type: {vulnDetail.Type}, CVSS: {vulnDetail.Level}");
->>>>>>>>> Temporary merge branch 2
                 }
             }
         }
