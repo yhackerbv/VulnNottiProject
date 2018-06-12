@@ -144,6 +144,7 @@ namespace VulnUserCodeAnalyzer
         }
         static void Main(string[] args)
         {
+            Console.WriteLine("Start: Code Analyze Server");
             /* 연도별 CVE JSON 파일 로드 */
             CVE_JSON.AutoLoad();
             /* 크롤러 타입 */

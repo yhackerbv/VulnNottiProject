@@ -210,6 +210,72 @@ namespace VulnCrawler
                 }
             }
         }
+
+        /// <summary>
+        /// 패치 전 코드 파일과 크리티컬 메서드 테이블로 부터 크리티컬 블록 추출
+        /// </summary>
+        /// <param name="oldBlob">패치 전 파일 Blob</param>
+        /// <param name="table">크리티컬 메서드 테이블(Key: 메서드 이름, Value: 변수 리스트)</param>
+        /// <returns></returns>
+        public virtual IEnumerable<(string methodName, IList<Block> blocks)> ProcessBlocks(Blob oldBlob, IDictionary<string, IEnumerable<string>> table)
+        {
+            foreach (var item in table)
+            {
+                var methodTable = new Dictionary<string, string>();
+                var varTable = new Dictionary<string, string>();
+                // 메서드 이름
+                string methodName = item.Key;
+                // 패치 전 원본 파일 스트림
+                Stream oldStream = oldBlob.GetContentStream();
+                // 패치 전 원본 함수 구하고
+                string func = GetOriginalFunc(oldStream, methodName);
+                Console.WriteLine(func);
+                string bs = string.Empty;
+                string md5 = string.Empty;
+                if (item.Value.Count() != 0)
+                {
+                    Console.WriteLine("크리티컬 변수 목록");
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    foreach (var c in item.Value)
+                    {
+                        Console.WriteLine(c);
+                    }
+                    Console.ResetColor();
+                    Console.WriteLine("-------------------");
+                    // 크리티컬 블록 추출
+                    var blocks = GetCriticalBlocks(func, item.Value).ToList();
+                    if (blocks == null)
+                    {
+                        continue;
+                    }
+                    foreach (var block in blocks)
+                    {
+
+                        block.CriticalList = item.Value;
+                        block.AbsCode = Abstract(block.Code, varTable, methodTable);
+                        block.Hash = MD5HashFunc(block.AbsCode);
+
+                    }
+
+                    /* 추상화 및 정규화 */
+                    foreach (var block in blocks)
+                    {
+                        string code = block.Code;
+
+                    }
+
+
+                    foreach (var var in varTable)
+                    {
+                        Console.WriteLine($"{var.Key}, {var.Value}");
+                    }
+                    yield return (methodName, blocks);
+                }
+
+            }
+        }
+
+
         /// <summary>
         /// 주석 제거 함수
         /// </summary>
