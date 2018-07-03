@@ -180,7 +180,7 @@ namespace VulnCrawler
                                 Console.WriteLine($"AbsCode = \n{block.AbsCode}");
                                 Console.WriteLine($"MD5 = {block.Hash}");
                             }
-                            Console.ReadLine();
+                            //Console.ReadLine();
                         }
                     }
                     else
